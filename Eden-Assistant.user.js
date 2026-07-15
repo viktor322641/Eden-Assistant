@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.7
-// @description  Opens Eden 1 Vue and enters WIP 31583 into the correct WIP field without searching
+// @version      0.8
+// @description  Opens Eden 1 Vue, enters WIP 31583 and presses the correct Search button
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -15,7 +15,7 @@
     "use strict";
 
     const WIP_NUMBER = "31583";
-    const AUTO_HASH = "#eden-assistant-enter-wip";
+    const AUTO_HASH = "#eden-assistant-search-wip";
 
     const sleep = milliseconds =>
         new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -99,7 +99,38 @@
         link.click();
     }
 
-    async function enterWip() {
+    function findSearchButtonNearWip(input) {
+        let container = input.parentElement;
+
+        for (let level = 0; level < 6 && container; level++) {
+            const candidates = [
+                ...container.querySelectorAll(
+                    "a, button, div, span, input[type='button'], input[type='submit'], [role='button']"
+                )
+            ];
+
+            const button = candidates.find(element => {
+                if (!isVisible(element)) return false;
+                const text = normalise(
+                    element.innerText ||
+                    element.textContent ||
+                    element.value ||
+                    element.title
+                );
+                return text === "search";
+            });
+
+            if (button) {
+                return button.closest("a, button, [role='button']") || button;
+            }
+
+            container = container.parentElement;
+        }
+
+        return null;
+    }
+
+    async function enterWipAndSearch() {
         setStatus("Looking for WIP field...");
 
         const input = await waitForElement(() => {
@@ -119,7 +150,27 @@
         input.style.outlineOffset = "3px";
         input.style.background = "#fff59d";
 
-        setStatus(`WIP ${WIP_NUMBER} entered — Search not pressed`);
+        await sleep(600);
+
+        setStatus("Looking for Search button...");
+        const searchButton = await waitForElement(
+            () => findSearchButtonNearWip(input),
+            10000
+        );
+
+        if (!searchButton) {
+            setStatus("Search button near WIP field not found", true);
+            return;
+        }
+
+        searchButton.style.outline = "4px solid #4caf50";
+        searchButton.style.outlineOffset = "3px";
+
+        setStatus(`WIP ${WIP_NUMBER} entered — pressing Search...`);
+        searchButton.click();
+
+        await sleep(1000);
+        setStatus(`Search pressed for WIP ${WIP_NUMBER}`);
     }
 
     async function runAssistant() {
@@ -133,7 +184,7 @@
             if (location.hostname === "login.eden1vision.com") {
                 await openEdenVue();
             } else if (location.hostname === "eden.dealfile.co.uk") {
-                await enterWip();
+                await enterWipAndSearch();
             } else {
                 setStatus("Unsupported page", true);
             }
@@ -146,7 +197,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `ENTER WIP ${WIP_NUMBER}`;
+                        : `SEARCH WIP ${WIP_NUMBER}`;
             }
         }
     }
@@ -173,7 +224,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.7 ready";
+        status.textContent = "v0.8 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
@@ -189,7 +240,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `ENTER WIP ${WIP_NUMBER}`;
+                : `SEARCH WIP ${WIP_NUMBER}`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
@@ -219,6 +270,6 @@
         location.hash === AUTO_HASH
     ) {
         history.replaceState(null, "", location.pathname + location.search);
-        setTimeout(enterWip, 1200);
+        setTimeout(enterWipAndSearch, 1200);
     }
 })();
