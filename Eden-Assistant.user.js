@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.18.2
-// @description  Opens Eden 1 Vue, searches WIP 31583, tests Inspection and Front Left tyre values with jQuery save events
+// @version      0.19
+// @description  Searches WIP 31583, fills all Inspection comments with __ and restores Front Left tyre values
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -131,70 +131,52 @@
             return false;
         }
 
+        await sleep(500);
         return true;
     }
 
-    function findInspectionRow(itemName) {
-        return Array.from(
-            document.querySelectorAll("#vhcinspection .servline_vhc[job]")
-        ).find(row =>
-            String(row.getAttribute("job") || "").trim().toLowerCase() ===
-            String(itemName).trim().toLowerCase()
-        ) || null;
-    }
+    async function setAllInspectionDescriptions(description) {
+        setStatus("Finding all Inspection description fields...");
 
-    function getColourSelector(colour) {
-        const value = String(colour).trim().toLowerCase();
-        if (value === "green") {
-            return ".vhcbtn.btn-success, .vhcbtn[class*='_green']";
-        }
-        if (value === "amber") {
-            return ".vhcbtn.btn-warning, .vhcbtn[class*='_amber']";
-        }
-        if (value === "red") {
-            return ".vhcbtn.btn-danger, .vhcbtn[class*='_red']";
-        }
-        throw new Error(`Unsupported colour: ${colour}`);
-    }
-
-    async function setInspectionItem(itemName, colour, description) {
-        setStatus(`Inspection: ${itemName}...`);
-
-        const row = await waitForElement(() => {
-            const element = findInspectionRow(itemName);
-            return isVisible(element) ? element : null;
+        const firstField = await waitForElement(() => {
+            const fields = Array.from(document.querySelectorAll(
+                "#vhcinspection input.vhcjobdesc, " +
+                "#vhcinspection input[id^='vhcjobdesc_']"
+            ));
+            return fields.find(isVisible) || null;
         }, 10000);
 
-        if (!row) {
-            setStatus(`${itemName} row not found`, true);
+        if (!firstField) {
+            setStatus("No Inspection description fields found", true);
             return false;
         }
 
-        const colourButton = row.querySelector(getColourSelector(colour));
-        if (!colourButton || !isVisible(colourButton)) {
-            setStatus(`${colour} button not found for ${itemName}`, true);
+        const fields = Array.from(document.querySelectorAll(
+            "#vhcinspection input.vhcjobdesc, " +
+            "#vhcinspection input[id^='vhcjobdesc_']"
+        )).filter(isVisible);
+
+        if (!fields.length) {
+            setStatus("No visible Inspection description fields", true);
             return false;
         }
 
-        triggerClick(colourButton);
-        await sleep(700);
+        let saved = 0;
+        for (const field of fields) {
+            field.focus();
+            setInputValue(field, description);
+            await sleep(100);
+            commitInput(field);
+            await sleep(350);
 
-        const descriptionInput = await waitForElement(() => {
-            const element = row.querySelector(
-                "input.vhcjobdesc, input[id^='vhcjobdesc_']"
-            );
-            return isVisible(element) ? element : null;
-        }, 5000);
-
-        if (!descriptionInput) {
-            setStatus(`Description field not found for ${itemName}`, true);
-            return false;
+            if (String(field.value) === String(description)) {
+                saved += 1;
+                field.style.outline = "2px solid #7e57c2";
+            }
         }
 
-        descriptionInput.focus();
-        setInputValue(descriptionInput, description);
-        commitInput(descriptionInput);
-        return true;
+        setStatus(`Inspection comments: ${saved}/${fields.length} set to ${description}`);
+        return saved === fields.length;
     }
 
     async function setTyre(side, data) {
@@ -221,7 +203,7 @@
             return false;
         }
 
-        setStatus(`Filling tyre ${side.toUpperCase()}...`);
+        setStatus(`Restoring tyre ${side.toUpperCase()}...`);
 
         for (const [name, element] of Object.entries(fields)) {
             if (!(name in data)) continue;
@@ -249,7 +231,8 @@
         }
 
         setStatus(
-            `Tyre ${side.toUpperCase()} = ${data.outer}/${data.mid}/${data.inner} ${data.make}`
+            `Tyre ${side.toUpperCase()} restored: ` +
+            `${data.outer}/${data.mid}/${data.inner} ${data.make}`
         );
         return true;
     }
@@ -291,11 +274,8 @@
         );
         if (!inspectionOpened) return;
 
-        await setInspectionItem(
-            "Air Conditioning Temp",
-            "Green",
-            "OK"
-        );
+        const commentsDone = await setAllInspectionDescriptions("__");
+        if (!commentsDone) return;
 
         const tyresOpened = await openTab(
             "vhctab_tyres",
@@ -305,10 +285,10 @@
         if (!tyresOpened) return;
 
         await setTyre("fl", {
-            outer: 4,
-            mid: 4,
-            inner: 4,
-            make: "FALKEN",
+            outer: 5,
+            mid: 5,
+            inner: 5,
+            make: "Falken",
             size: "235/50R19 103Y",
             notes: ""
         });
@@ -338,7 +318,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `TEST FL SAVE 4/4/4 FALKEN ${WIP_NUMBER}`;
+                        : `TEST ALL COMMENTS __ ${WIP_NUMBER}`;
             }
         }
     }
@@ -365,9 +345,9 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.18.2 ready";
+        status.textContent = "v0.19 ready";
         Object.assign(status.style, {
-            maxWidth: "300px",
+            maxWidth: "320px",
             padding: "9px 12px",
             borderRadius: "9px",
             background: "#263238",
@@ -381,7 +361,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `TEST FL SAVE 4/4/4 FALKEN ${WIP_NUMBER}`;
+                : `TEST ALL COMMENTS __ ${WIP_NUMBER}`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
