@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.10
-// @description  Opens Eden 1 Vue, enters WIP 31583 and triggers the exact Eden Search control
+// @version      0.11
+// @description  Opens the exact Eden 1 Vue link, enters WIP 31583 and triggers the exact Search control
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -19,13 +19,6 @@
 
     const sleep = milliseconds =>
         new Promise(resolve => setTimeout(resolve, milliseconds));
-
-    function normalise(text) {
-        return String(text || "")
-            .replace(/\s+/g, " ")
-            .trim()
-            .toLowerCase();
-    }
 
     function isVisible(element) {
         if (!element) return false;
@@ -71,32 +64,25 @@
         input.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true }));
     }
 
-    function findEdenVueLink() {
-        const label = [...document.querySelectorAll("a, div, span, button")]
-            .find(element =>
-                isVisible(element) &&
-                normalise(element.textContent) === "eden 1 vue"
-            );
-        return label?.closest("a") || label || null;
-    }
-
     async function openEdenVue() {
-        setStatus("Looking for Eden 1 Vue...");
-        const link = await waitForElement(findEdenVueLink, 10000);
+        setStatus("Looking for exact Eden 1 Vue link...");
 
-        if (!link) {
-            setStatus("Eden 1 Vue tile not found", true);
+        const link = await waitForElement(() => {
+            const exact = document.querySelector(
+                'a.block-link[href*="dealcrm_codeweavers/main.asp"]'
+            );
+            return isVisible(exact) ? exact : null;
+        }, 10000);
+
+        if (!link || !link.href) {
+            setStatus("Exact Eden 1 Vue link not found", true);
             return;
         }
 
         setStatus("Opening Eden 1 Vue...");
-
-        if (link.tagName === "A" && link.href) {
-            window.location.href = link.href.split("#")[0] + AUTO_HASH;
-            return;
-        }
-
-        link.click();
+        const destination = new URL(link.href, location.href);
+        destination.hash = AUTO_HASH;
+        window.location.href = destination.href;
     }
 
     function triggerExactSearch(searchButton) {
@@ -111,7 +97,6 @@
             composed: true,
             view: window
         }));
-
         return "native click event triggered";
     }
 
@@ -149,9 +134,8 @@
         searchButton.style.outline = "4px solid #4caf50";
         searchButton.style.outlineOffset = "3px";
 
-        setStatus(`WIP ${WIP_NUMBER} entered — triggering exact Search...`);
+        setStatus(`WIP ${WIP_NUMBER} entered — triggering Search...`);
         const result = triggerExactSearch(searchButton);
-
         await sleep(1200);
         setStatus(`${result} for WIP ${WIP_NUMBER}`);
     }
@@ -207,7 +191,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.10 ready";
+        status.textContent = "v0.11 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
