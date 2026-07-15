@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.14
-// @description  Opens Eden 1 Vue, searches WIP 31583 and opens the Inspection tab
+// @version      0.15
+// @description  Opens Eden 1 Vue, searches WIP 31583, opens Inspection and selects Green for Air Conditioning Temp
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -71,13 +71,13 @@
         window.location.assign(EDEN_VUE_URL + AUTO_HASH);
     }
 
-    function triggerExactSearch(searchButton) {
+    function triggerClick(element) {
         if (window.jQuery) {
-            window.jQuery(searchButton).trigger("click");
+            window.jQuery(element).trigger("click");
             return;
         }
 
-        searchButton.dispatchEvent(new MouseEvent("click", {
+        element.dispatchEvent(new MouseEvent("click", {
             bubbles: true,
             cancelable: true,
             composed: true,
@@ -102,7 +102,6 @@
 
         inspectionTab.style.outline = "4px solid #00bcd4";
         inspectionTab.style.outlineOffset = "3px";
-
         setStatus("Opening Inspection...");
 
         if (window.jQuery && typeof window.jQuery(inspectionTab).tab === "function") {
@@ -125,7 +124,46 @@
         return true;
     }
 
-    async function enterWipSearchAndOpenInspection() {
+    async function selectAirConditioningGreen() {
+        setStatus("Looking for Air Conditioning Temp...");
+
+        const row = await waitForElement(() => {
+            const element = document.querySelector(
+                '#vhcinspection .servline_vhc[job="Air Conditioning Temp"]'
+            );
+            return isVisible(element) ? element : null;
+        }, 10000);
+
+        if (!row) {
+            setStatus("Air Conditioning Temp row not found", true);
+            return false;
+        }
+
+        const greenButton = await waitForElement(() => {
+            const element = row.querySelector(
+                ".vhcbtn.btn-success, .vhcbtn[class*='_green']"
+            );
+            return isVisible(element) ? element : null;
+        }, 5000);
+
+        if (!greenButton) {
+            setStatus("Green button in Air Conditioning Temp not found", true);
+            return false;
+        }
+
+        row.style.outline = "3px solid #7e57c2";
+        row.style.outlineOffset = "2px";
+        greenButton.style.outline = "4px solid #00e676";
+        greenButton.style.outlineOffset = "3px";
+
+        setStatus("Selecting Green for Air Conditioning Temp...");
+        triggerClick(greenButton);
+        await sleep(1000);
+        setStatus("Green selected for Air Conditioning Temp");
+        return true;
+    }
+
+    async function enterWipSearchOpenInspectionAndSelectGreen() {
         setStatus("Looking for WIP field...");
 
         const input = await waitForElement(() => {
@@ -160,9 +198,12 @@
         searchButton.style.outlineOffset = "3px";
 
         setStatus(`Searching WIP ${WIP_NUMBER}...`);
-        triggerExactSearch(searchButton);
+        triggerClick(searchButton);
 
-        await openInspection();
+        const opened = await openInspection();
+        if (!opened) return;
+
+        await selectAirConditioningGreen();
     }
 
     async function runAssistant() {
@@ -176,7 +217,7 @@
             if (location.hostname === "login.eden1vision.com") {
                 await openEdenVue();
             } else if (location.hostname === "eden.dealfile.co.uk") {
-                await enterWipSearchAndOpenInspection();
+                await enterWipSearchOpenInspectionAndSelectGreen();
             } else {
                 setStatus("Unsupported page", true);
             }
@@ -189,7 +230,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `OPEN WIP ${WIP_NUMBER} INSPECTION`;
+                        : `TEST GREEN WIP ${WIP_NUMBER}`;
             }
         }
     }
@@ -216,7 +257,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.14 ready";
+        status.textContent = "v0.15 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
@@ -232,7 +273,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `OPEN WIP ${WIP_NUMBER} INSPECTION`;
+                : `TEST GREEN WIP ${WIP_NUMBER}`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
@@ -262,6 +303,6 @@
         location.hash === AUTO_HASH
     ) {
         history.replaceState(null, "", location.pathname + location.search);
-        setTimeout(enterWipSearchAndOpenInspection, 1200);
+        setTimeout(enterWipSearchOpenInspectionAndSelectGreen, 1200);
     }
 })();
