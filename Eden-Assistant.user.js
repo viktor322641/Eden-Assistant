@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.16.1
-// @description  Opens Eden 1 Vue, searches WIP 31583, opens Inspection, selects Green and enters OK for Air Conditioning Temp
+// @version      0.17
+// @description  Opens Eden 1 Vue, searches WIP 31583 and tests the universal Inspection row engine
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -100,7 +100,10 @@
             return false;
         }
 
-        if (window.jQuery && typeof window.jQuery(inspectionTab).tab === "function") {
+        if (
+            window.jQuery &&
+            typeof window.jQuery(inspectionTab).tab === "function"
+        ) {
             window.jQuery(inspectionTab).tab("show");
         } else {
             inspectionTab.click();
@@ -120,32 +123,55 @@
         return true;
     }
 
-    async function updateAirConditioningRow() {
-        setStatus("Looking for Air Conditioning Temp...");
+    function findInspectionRow(itemName) {
+        const rows = Array.from(
+            document.querySelectorAll("#vhcinspection .servline_vhc[job]")
+        );
+
+        return rows.find(row =>
+            String(row.getAttribute("job") || "").trim().toLowerCase() ===
+            String(itemName).trim().toLowerCase()
+        ) || null;
+    }
+
+    function getColourSelector(colour) {
+        const normalised = String(colour).trim().toLowerCase();
+
+        if (normalised === "green") {
+            return ".vhcbtn.btn-success, .vhcbtn[class*='_green']";
+        }
+        if (normalised === "amber") {
+            return ".vhcbtn.btn-warning, .vhcbtn[class*='_amber']";
+        }
+        if (normalised === "red") {
+            return ".vhcbtn.btn-danger, .vhcbtn[class*='_red']";
+        }
+
+        throw new Error(`Unsupported colour: ${colour}`);
+    }
+
+    async function setInspectionItem(itemName, colour, description) {
+        setStatus(`Looking for ${itemName}...`);
 
         const row = await waitForElement(() => {
-            const element = document.querySelector(
-                '#vhcinspection .servline_vhc[job="Air Conditioning Temp"]'
-            );
+            const element = findInspectionRow(itemName);
             return isVisible(element) ? element : null;
         }, 10000);
 
         if (!row) {
-            setStatus("Air Conditioning Temp row not found", true);
+            setStatus(`${itemName} row not found`, true);
             return false;
         }
 
-        const greenButton = row.querySelector(
-            ".vhcbtn.btn-success, .vhcbtn[class*='_green']"
-        );
+        const colourButton = row.querySelector(getColourSelector(colour));
 
-        if (!greenButton || !isVisible(greenButton)) {
-            setStatus("Green button not found", true);
+        if (!colourButton || !isVisible(colourButton)) {
+            setStatus(`${colour} button not found for ${itemName}`, true);
             return false;
         }
 
-        setStatus("Selecting Green...");
-        triggerClick(greenButton);
+        setStatus(`Selecting ${colour} for ${itemName}...`);
+        triggerClick(colourButton);
         await sleep(700);
 
         const descriptionInput = await waitForElement(() => {
@@ -156,20 +182,22 @@
         }, 5000);
 
         if (!descriptionInput) {
-            setStatus("Description field not found", true);
+            setStatus(`Description field not found for ${itemName}`, true);
             return false;
         }
 
         descriptionInput.focus();
-        setInputValue(descriptionInput, "OK");
-        descriptionInput.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+        setInputValue(descriptionInput, description);
+        descriptionInput.dispatchEvent(
+            new FocusEvent("blur", { bubbles: true })
+        );
         descriptionInput.blur();
 
-        descriptionInput.style.outline = "4px solid #7e57c2";
-        descriptionInput.style.outlineOffset = "3px";
+        row.style.outline = "3px solid #7e57c2";
+        row.style.outlineOffset = "2px";
 
         await sleep(1000);
-        setStatus("Green selected and OK entered");
+        setStatus(`${itemName}: ${colour} + ${description}`);
         return true;
     }
 
@@ -206,7 +234,11 @@
         const opened = await openInspection();
         if (!opened) return;
 
-        await updateAirConditioningRow();
+        await setInspectionItem(
+            "Air Conditioning Temp",
+            "Green",
+            "OK"
+        );
     }
 
     async function runAssistant() {
@@ -233,7 +265,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `TEST GREEN + OK ${WIP_NUMBER}`;
+                        : `TEST UNIVERSAL ROW ${WIP_NUMBER}`;
             }
         }
     }
@@ -260,7 +292,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.16.1 ready";
+        status.textContent = "v0.17 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
@@ -276,7 +308,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `TEST GREEN + OK ${WIP_NUMBER}`;
+                : `TEST UNIVERSAL ROW ${WIP_NUMBER}`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
