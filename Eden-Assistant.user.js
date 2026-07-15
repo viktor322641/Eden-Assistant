@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.9
-// @description  Opens Eden 1 Vue, enters WIP 31583 and presses Search using real pointer and mouse events
+// @version      0.10
+// @description  Opens Eden 1 Vue, enters WIP 31583 and triggers the exact Eden Search control
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -99,92 +99,20 @@
         link.click();
     }
 
-    function findSearchButtonNearWip(input) {
-        let container = input.parentElement;
-
-        for (let level = 0; level < 6 && container; level++) {
-            const candidates = [
-                ...container.querySelectorAll(
-                    "a, button, div, span, input[type='button'], input[type='submit'], [role='button']"
-                )
-            ];
-
-            const label = candidates.find(element => {
-                if (!isVisible(element)) return false;
-                const text = normalise(
-                    element.innerText ||
-                    element.textContent ||
-                    element.value ||
-                    element.title
-                );
-                return text === "search";
-            });
-
-            if (label) {
-                return label.closest("a, button, [role='button']") || label;
-            }
-
-            container = container.parentElement;
+    function triggerExactSearch(searchButton) {
+        if (window.jQuery) {
+            window.jQuery(searchButton).trigger("click");
+            return "jQuery click triggered";
         }
 
-        return null;
-    }
-
-    function dispatchRealClick(element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
-        element.focus?.();
-
-        const rect = element.getBoundingClientRect();
-        const clientX = rect.left + rect.width / 2;
-        const clientY = rect.top + rect.height / 2;
-
-        const pointerOptions = {
+        searchButton.dispatchEvent(new MouseEvent("click", {
             bubbles: true,
             cancelable: true,
             composed: true,
-            pointerId: 1,
-            pointerType: "touch",
-            isPrimary: true,
-            clientX,
-            clientY,
-            button: 0,
-            buttons: 1
-        };
-
-        const mouseOptions = {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            view: window,
-            clientX,
-            clientY,
-            button: 0,
-            buttons: 1
-        };
-
-        if (typeof PointerEvent === "function") {
-            element.dispatchEvent(new PointerEvent("pointerdown", pointerOptions));
-        }
-
-        element.dispatchEvent(new MouseEvent("mousedown", mouseOptions));
-
-        if (typeof PointerEvent === "function") {
-            element.dispatchEvent(new PointerEvent("pointerup", {
-                ...pointerOptions,
-                buttons: 0
-            }));
-        }
-
-        element.dispatchEvent(new MouseEvent("mouseup", {
-            ...mouseOptions,
-            buttons: 0
+            view: window
         }));
 
-        element.dispatchEvent(new MouseEvent("click", {
-            ...mouseOptions,
-            buttons: 0,
-            detail: 1
-        }));
+        return "native click event triggered";
     }
 
     async function enterWipAndSearch() {
@@ -200,34 +128,32 @@
             return;
         }
 
-        input.scrollIntoView({ behavior: "smooth", block: "center" });
         input.focus();
         setInputValue(input, WIP_NUMBER);
         input.style.outline = "4px solid #ffeb3b";
         input.style.outlineOffset = "3px";
         input.style.background = "#fff59d";
 
-        await sleep(600);
+        await sleep(500);
 
-        setStatus("Looking for Search button...");
-        const searchButton = await waitForElement(
-            () => findSearchButtonNearWip(input),
-            10000
-        );
+        const searchButton = await waitForElement(() => {
+            const element = document.getElementById("mainsearchbuts_serv");
+            return isVisible(element) ? element : null;
+        }, 10000);
 
         if (!searchButton) {
-            setStatus("Search button near WIP field not found", true);
+            setStatus("Exact Search control #mainsearchbuts_serv not found", true);
             return;
         }
 
         searchButton.style.outline = "4px solid #4caf50";
         searchButton.style.outlineOffset = "3px";
 
-        setStatus(`WIP ${WIP_NUMBER} entered — sending real click...`);
-        dispatchRealClick(searchButton);
+        setStatus(`WIP ${WIP_NUMBER} entered — triggering exact Search...`);
+        const result = triggerExactSearch(searchButton);
 
         await sleep(1200);
-        setStatus(`Real click sent for WIP ${WIP_NUMBER}`);
+        setStatus(`${result} for WIP ${WIP_NUMBER}`);
     }
 
     async function runAssistant() {
@@ -281,7 +207,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.9 ready";
+        status.textContent = "v0.10 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
