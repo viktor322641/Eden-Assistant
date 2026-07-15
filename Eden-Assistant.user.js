@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.16
+// @version      0.16.1
 // @description  Opens Eden 1 Vue, searches WIP 31583, opens Inspection, selects Green and enters OK for Air Conditioning Temp
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -260,7 +260,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.16 ready";
+        status.textContent = "v0.16.1 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
