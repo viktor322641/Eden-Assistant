@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.13
-// @description  Opens Eden 1 Vue using the correct absolute Dealfile URL, enters WIP 31583 and triggers Search
+// @version      0.14
+// @description  Opens Eden 1 Vue, searches WIP 31583 and opens the Inspection tab
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -74,7 +74,7 @@
     function triggerExactSearch(searchButton) {
         if (window.jQuery) {
             window.jQuery(searchButton).trigger("click");
-            return "jQuery click triggered";
+            return;
         }
 
         searchButton.dispatchEvent(new MouseEvent("click", {
@@ -83,10 +83,49 @@
             composed: true,
             view: window
         }));
-        return "native click event triggered";
     }
 
-    async function enterWipAndSearch() {
+    async function openInspection() {
+        setStatus("Waiting for Inspection tab...");
+
+        const inspectionTab = await waitForElement(() => {
+            const element =
+                document.getElementById("vhctab_inpection") ||
+                document.querySelector('a[href="#vhcinspection"]');
+            return isVisible(element) ? element : null;
+        }, 20000);
+
+        if (!inspectionTab) {
+            setStatus("Inspection tab not found", true);
+            return false;
+        }
+
+        inspectionTab.style.outline = "4px solid #00bcd4";
+        inspectionTab.style.outlineOffset = "3px";
+
+        setStatus("Opening Inspection...");
+
+        if (window.jQuery && typeof window.jQuery(inspectionTab).tab === "function") {
+            window.jQuery(inspectionTab).tab("show");
+        } else {
+            inspectionTab.click();
+        }
+
+        const inspectionPane = await waitForElement(() => {
+            const pane = document.getElementById("vhcinspection");
+            return isVisible(pane) ? pane : null;
+        }, 10000);
+
+        if (!inspectionPane) {
+            setStatus("Inspection click sent, but pane did not open", true);
+            return false;
+        }
+
+        setStatus("Inspection opened");
+        return true;
+    }
+
+    async function enterWipSearchAndOpenInspection() {
         setStatus("Looking for WIP field...");
 
         const input = await waitForElement(() => {
@@ -120,10 +159,10 @@
         searchButton.style.outline = "4px solid #4caf50";
         searchButton.style.outlineOffset = "3px";
 
-        setStatus(`WIP ${WIP_NUMBER} entered — triggering Search...`);
-        const result = triggerExactSearch(searchButton);
-        await sleep(1200);
-        setStatus(`${result} for WIP ${WIP_NUMBER}`);
+        setStatus(`Searching WIP ${WIP_NUMBER}...`);
+        triggerExactSearch(searchButton);
+
+        await openInspection();
     }
 
     async function runAssistant() {
@@ -137,7 +176,7 @@
             if (location.hostname === "login.eden1vision.com") {
                 await openEdenVue();
             } else if (location.hostname === "eden.dealfile.co.uk") {
-                await enterWipAndSearch();
+                await enterWipSearchAndOpenInspection();
             } else {
                 setStatus("Unsupported page", true);
             }
@@ -150,7 +189,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `SEARCH WIP ${WIP_NUMBER}`;
+                        : `OPEN WIP ${WIP_NUMBER} INSPECTION`;
             }
         }
     }
@@ -177,7 +216,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.13 ready";
+        status.textContent = "v0.14 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
@@ -193,7 +232,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `SEARCH WIP ${WIP_NUMBER}`;
+                : `OPEN WIP ${WIP_NUMBER} INSPECTION`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
@@ -223,6 +262,6 @@
         location.hash === AUTO_HASH
     ) {
         history.replaceState(null, "", location.pathname + location.search);
-        setTimeout(enterWipAndSearch, 1200);
+        setTimeout(enterWipSearchAndOpenInspection, 1200);
     }
 })();
