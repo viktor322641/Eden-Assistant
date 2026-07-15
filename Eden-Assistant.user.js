@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.17
-// @description  Opens Eden 1 Vue, searches WIP 31583 and tests the universal Inspection row engine
+// @version      0.18
+// @description  Opens Eden 1 Vue, searches WIP 31583, tests Inspection and the universal Tyres engine
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -58,12 +58,17 @@
             "value"
         )?.set;
 
-        if (setter) setter.call(input, value);
-        else input.value = value;
+        if (setter) setter.call(input, String(value));
+        else input.value = String(value);
 
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new Event("change", { bubbles: true }));
         input.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true }));
+    }
+
+    function commitInput(input) {
+        input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+        input.blur();
     }
 
     function triggerClick(element) {
@@ -85,41 +90,35 @@
         window.location.assign(EDEN_VUE_URL + AUTO_HASH);
     }
 
-    async function openInspection() {
-        setStatus("Waiting for Inspection tab...");
-
-        const inspectionTab = await waitForElement(() => {
+    async function openTab(tabId, paneId, href) {
+        const tab = await waitForElement(() => {
             const element =
-                document.getElementById("vhctab_inpection") ||
-                document.querySelector('a[href="#vhcinspection"]');
+                document.getElementById(tabId) ||
+                document.querySelector(`a[href="${href}"]`);
             return isVisible(element) ? element : null;
         }, 20000);
 
-        if (!inspectionTab) {
-            setStatus("Inspection tab not found", true);
+        if (!tab) {
+            setStatus(`${paneId} tab not found`, true);
             return false;
         }
 
-        if (
-            window.jQuery &&
-            typeof window.jQuery(inspectionTab).tab === "function"
-        ) {
-            window.jQuery(inspectionTab).tab("show");
+        if (window.jQuery && typeof window.jQuery(tab).tab === "function") {
+            window.jQuery(tab).tab("show");
         } else {
-            inspectionTab.click();
+            tab.click();
         }
 
         const pane = await waitForElement(() => {
-            const element = document.getElementById("vhcinspection");
+            const element = document.getElementById(paneId);
             return isVisible(element) ? element : null;
         }, 10000);
 
         if (!pane) {
-            setStatus("Inspection did not open", true);
+            setStatus(`${paneId} did not open`, true);
             return false;
         }
 
-        setStatus("Inspection opened");
         return true;
     }
 
@@ -151,7 +150,7 @@
     }
 
     async function setInspectionItem(itemName, colour, description) {
-        setStatus(`Looking for ${itemName}...`);
+        setStatus(`Inspection: ${itemName}...`);
 
         const row = await waitForElement(() => {
             const element = findInspectionRow(itemName);
@@ -164,13 +163,11 @@
         }
 
         const colourButton = row.querySelector(getColourSelector(colour));
-
         if (!colourButton || !isVisible(colourButton)) {
             setStatus(`${colour} button not found for ${itemName}`, true);
             return false;
         }
 
-        setStatus(`Selecting ${colour} for ${itemName}...`);
         triggerClick(colourButton);
         await sleep(700);
 
@@ -188,16 +185,51 @@
 
         descriptionInput.focus();
         setInputValue(descriptionInput, description);
-        descriptionInput.dispatchEvent(
-            new FocusEvent("blur", { bubbles: true })
-        );
-        descriptionInput.blur();
+        commitInput(descriptionInput);
+        return true;
+    }
 
-        row.style.outline = "3px solid #7e57c2";
-        row.style.outlineOffset = "2px";
+    async function setTyre(side, data) {
+        const allowedSides = ["fl", "fr", "rl", "rr", "spare"];
+        if (!allowedSides.includes(side)) {
+            throw new Error(`Unsupported tyre side: ${side}`);
+        }
 
-        await sleep(1000);
-        setStatus(`${itemName}: ${colour} + ${description}`);
+        const fields = {
+            outer: document.getElementById(`x_${side}_outer`),
+            mid: document.getElementById(`x_${side}_mid`),
+            inner: document.getElementById(`x_${side}_inner`),
+            make: document.getElementById(`x_${side}_make`),
+            size: document.getElementById(`x_${side}_size`),
+            notes: document.getElementById(`x_${side}_notes`)
+        };
+
+        const missing = Object.entries(fields)
+            .filter(([, element]) => !element)
+            .map(([name]) => name);
+
+        if (missing.length) {
+            setStatus(`Tyre ${side}: missing ${missing.join(", ")}`, true);
+            return false;
+        }
+
+        setStatus(`Filling tyre ${side.toUpperCase()}...`);
+
+        for (const [name, element] of Object.entries(fields)) {
+            if (!(name in data)) continue;
+            element.focus();
+            setInputValue(element, data[name]);
+            commitInput(element);
+            await sleep(250);
+        }
+
+        const container = document.getElementById(`vhctyre_${side}_outer`);
+        if (container) {
+            container.style.outline = "3px solid #7e57c2";
+            container.style.outlineOffset = "2px";
+        }
+
+        setStatus(`Tyre ${side.toUpperCase()} filled`);
         return true;
     }
 
@@ -231,14 +263,34 @@
         setStatus(`Searching WIP ${WIP_NUMBER}...`);
         triggerClick(searchButton);
 
-        const opened = await openInspection();
-        if (!opened) return;
+        const inspectionOpened = await openTab(
+            "vhctab_inpection",
+            "vhcinspection",
+            "#vhcinspection"
+        );
+        if (!inspectionOpened) return;
 
         await setInspectionItem(
             "Air Conditioning Temp",
             "Green",
             "OK"
         );
+
+        const tyresOpened = await openTab(
+            "vhctab_tyres",
+            "vhctyres",
+            "#vhctyres"
+        );
+        if (!tyresOpened) return;
+
+        await setTyre("fl", {
+            outer: 5,
+            mid: 5,
+            inner: 5,
+            make: "Falken",
+            size: "235/50R19 103Y",
+            notes: ""
+        });
     }
 
     async function runAssistant() {
@@ -265,7 +317,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `TEST UNIVERSAL ROW ${WIP_NUMBER}`;
+                        : `TEST FRONT LEFT TYRE ${WIP_NUMBER}`;
             }
         }
     }
@@ -292,7 +344,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.17 ready";
+        status.textContent = "v0.18 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
@@ -308,7 +360,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `TEST UNIVERSAL ROW ${WIP_NUMBER}`;
+                : `TEST FRONT LEFT TYRE ${WIP_NUMBER}`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
