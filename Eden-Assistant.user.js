@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.11
-// @description  Opens the exact Eden 1 Vue link, enters WIP 31583 and triggers the exact Search control
+// @version      0.12
+// @description  Opens Eden 1 Vue using the correct Dealfile domain, enters WIP 31583 and triggers Search
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -16,6 +16,8 @@
 
     const WIP_NUMBER = "31583";
     const AUTO_HASH = "#eden-assistant-search-wip";
+    const EDEN_VUE_URL =
+        "https://eden.dealfile.co.uk/dealcrm_codeweavers/main.asp?fl=1";
 
     const sleep = milliseconds =>
         new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -65,24 +67,8 @@
     }
 
     async function openEdenVue() {
-        setStatus("Looking for exact Eden 1 Vue link...");
-
-        const link = await waitForElement(() => {
-            const exact = document.querySelector(
-                'a.block-link[href*="dealcrm_codeweavers/main.asp"]'
-            );
-            return isVisible(exact) ? exact : null;
-        }, 10000);
-
-        if (!link || !link.href) {
-            setStatus("Exact Eden 1 Vue link not found", true);
-            return;
-        }
-
-        setStatus("Opening Eden 1 Vue...");
-        const destination = new URL(link.href, location.href);
-        destination.hash = AUTO_HASH;
-        window.location.href = destination.href;
+        setStatus("Opening Eden 1 Vue on Dealfile...");
+        window.location.href = EDEN_VUE_URL + AUTO_HASH;
     }
 
     function triggerExactSearch(searchButton) {
@@ -191,7 +177,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.11 ready";
+        status.textContent = "v0.12 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
