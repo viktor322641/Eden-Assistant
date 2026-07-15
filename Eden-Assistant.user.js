@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.19
-// @description  Searches WIP 31583, fills all Inspection comments with __ and restores Front Left tyre values
+// @version      0.20
+// @description  Opens Eden 1 Vue, searches WIP 31583 and opens Inspection without changing VHC data
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -98,7 +98,7 @@
     }
 
     async function openEdenVue() {
-        setStatus("Opening Eden 1 Vue on Dealfile...");
+        setStatus("Opening Eden 1 Vue...");
         window.location.assign(EDEN_VUE_URL + AUTO_HASH);
     }
 
@@ -135,50 +135,25 @@
         return true;
     }
 
+    // Prepared for later versions. Not called by v0.20.
     async function setAllInspectionDescriptions(description) {
-        setStatus("Finding all Inspection description fields...");
-
-        const firstField = await waitForElement(() => {
-            const fields = Array.from(document.querySelectorAll(
-                "#vhcinspection input.vhcjobdesc, " +
-                "#vhcinspection input[id^='vhcjobdesc_']"
-            ));
-            return fields.find(isVisible) || null;
-        }, 10000);
-
-        if (!firstField) {
-            setStatus("No Inspection description fields found", true);
-            return false;
-        }
-
         const fields = Array.from(document.querySelectorAll(
             "#vhcinspection input.vhcjobdesc, " +
             "#vhcinspection input[id^='vhcjobdesc_']"
         )).filter(isVisible);
 
-        if (!fields.length) {
-            setStatus("No visible Inspection description fields", true);
-            return false;
-        }
-
-        let saved = 0;
         for (const field of fields) {
             field.focus();
             setInputValue(field, description);
             await sleep(100);
             commitInput(field);
             await sleep(350);
-
-            if (String(field.value) === String(description)) {
-                saved += 1;
-                field.style.outline = "2px solid #7e57c2";
-            }
         }
 
-        setStatus(`Inspection comments: ${saved}/${fields.length} set to ${description}`);
-        return saved === fields.length;
+        return fields.length;
     }
 
+    // Prepared for later versions. Not called by v0.20.
     async function setTyre(side, data) {
         const allowedSides = ["fl", "fr", "rl", "rr", "spare"];
         if (!allowedSides.includes(side)) {
@@ -194,46 +169,15 @@
             notes: document.getElementById(`x_${side}_notes`)
         };
 
-        const missing = Object.entries(fields)
-            .filter(([, element]) => !element)
-            .map(([name]) => name);
-
-        if (missing.length) {
-            setStatus(`Tyre ${side}: missing ${missing.join(", ")}`, true);
-            return false;
-        }
-
-        setStatus(`Restoring tyre ${side.toUpperCase()}...`);
-
         for (const [name, element] of Object.entries(fields)) {
-            if (!(name in data)) continue;
-
+            if (!element || !(name in data)) continue;
             element.focus();
             setInputValue(element, data[name]);
             await sleep(150);
             commitInput(element);
             await sleep(700);
-
-            const expected = String(data[name]);
-            if (String(element.value) !== expected) {
-                setStatus(
-                    `Tyre ${side.toUpperCase()} ${name} reverted to ${element.value}`,
-                    true
-                );
-                return false;
-            }
         }
 
-        const container = document.getElementById(`vhctyre_${side}_outer`);
-        if (container) {
-            container.style.outline = "3px solid #7e57c2";
-            container.style.outlineOffset = "2px";
-        }
-
-        setStatus(
-            `Tyre ${side.toUpperCase()} restored: ` +
-            `${data.outer}/${data.mid}/${data.inner} ${data.make}`
-        );
         return true;
     }
 
@@ -272,26 +216,9 @@
             "vhcinspection",
             "#vhcinspection"
         );
+
         if (!inspectionOpened) return;
-
-        const commentsDone = await setAllInspectionDescriptions("__");
-        if (!commentsDone) return;
-
-        const tyresOpened = await openTab(
-            "vhctab_tyres",
-            "vhctyres",
-            "#vhctyres"
-        );
-        if (!tyresOpened) return;
-
-        await setTyre("fl", {
-            outer: 5,
-            mid: 5,
-            inner: 5,
-            make: "Falken",
-            size: "235/50R19 103Y",
-            notes: ""
-        });
+        setStatus(`WIP ${WIP_NUMBER}: Inspection opened`);
     }
 
     async function runAssistant() {
@@ -315,10 +242,7 @@
         } finally {
             if (button) {
                 button.disabled = false;
-                button.textContent =
-                    location.hostname === "login.eden1vision.com"
-                        ? "OPEN EDEN 1 VUE"
-                        : `TEST ALL COMMENTS __ ${WIP_NUMBER}`;
+                button.textContent = "EDEN ASSISTANT";
             }
         }
     }
@@ -345,7 +269,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.19 ready";
+        status.textContent = "v0.20 ready";
         Object.assign(status.style, {
             maxWidth: "320px",
             padding: "9px 12px",
@@ -358,10 +282,7 @@
 
         const button = document.createElement("button");
         button.id = "edenAssistantButton";
-        button.textContent =
-            location.hostname === "login.eden1vision.com"
-                ? "OPEN EDEN 1 VUE"
-                : `TEST ALL COMMENTS __ ${WIP_NUMBER}`;
+        button.textContent = "EDEN ASSISTANT";
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
