@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.12
-// @description  Opens Eden 1 Vue using the correct Dealfile domain, enters WIP 31583 and triggers Search
+// @version      0.13
+// @description  Opens Eden 1 Vue using the correct absolute Dealfile URL, enters WIP 31583 and triggers Search
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -17,7 +17,7 @@
     const WIP_NUMBER = "31583";
     const AUTO_HASH = "#eden-assistant-search-wip";
     const EDEN_VUE_URL =
-        "https://eden.dealfile.co.uk/dealcrm_codeweavers/main.asp?fl=1";
+        "https://eden.dealfile.co.uk/dealcrm_codeweavers/main.asp";
 
     const sleep = milliseconds =>
         new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -68,7 +68,7 @@
 
     async function openEdenVue() {
         setStatus("Opening Eden 1 Vue on Dealfile...");
-        window.location.href = EDEN_VUE_URL + AUTO_HASH;
+        window.location.assign(EDEN_VUE_URL + AUTO_HASH);
     }
 
     function triggerExactSearch(searchButton) {
@@ -177,7 +177,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.12 ready";
+        status.textContent = "v0.13 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
