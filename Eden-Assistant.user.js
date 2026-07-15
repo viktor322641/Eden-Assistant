@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.18
-// @description  Opens Eden 1 Vue, searches WIP 31583, tests Inspection and the universal Tyres engine
+// @version      0.18.1
+// @description  Opens Eden 1 Vue, searches WIP 31583, tests Inspection and Front Left tyre values
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -19,8 +19,7 @@
     const EDEN_VUE_URL =
         "https://eden.dealfile.co.uk/dealcrm_codeweavers/main.asp";
 
-    const sleep = milliseconds =>
-        new Promise(resolve => setTimeout(resolve, milliseconds));
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
     function isVisible(element) {
         if (!element) return false;
@@ -42,9 +41,9 @@
         status.style.background = isError ? "#b71c1c" : "#263238";
     }
 
-    async function waitForElement(finder, timeoutMilliseconds = 15000) {
+    async function waitForElement(finder, timeout = 15000) {
         const started = Date.now();
-        while (Date.now() - started < timeoutMilliseconds) {
+        while (Date.now() - started < timeout) {
             const element = finder();
             if (element) return element;
             await sleep(400);
@@ -123,29 +122,25 @@
     }
 
     function findInspectionRow(itemName) {
-        const rows = Array.from(
+        return Array.from(
             document.querySelectorAll("#vhcinspection .servline_vhc[job]")
-        );
-
-        return rows.find(row =>
+        ).find(row =>
             String(row.getAttribute("job") || "").trim().toLowerCase() ===
             String(itemName).trim().toLowerCase()
         ) || null;
     }
 
     function getColourSelector(colour) {
-        const normalised = String(colour).trim().toLowerCase();
-
-        if (normalised === "green") {
+        const value = String(colour).trim().toLowerCase();
+        if (value === "green") {
             return ".vhcbtn.btn-success, .vhcbtn[class*='_green']";
         }
-        if (normalised === "amber") {
+        if (value === "amber") {
             return ".vhcbtn.btn-warning, .vhcbtn[class*='_amber']";
         }
-        if (normalised === "red") {
+        if (value === "red") {
             return ".vhcbtn.btn-danger, .vhcbtn[class*='_red']";
         }
-
         throw new Error(`Unsupported colour: ${colour}`);
     }
 
@@ -284,10 +279,10 @@
         if (!tyresOpened) return;
 
         await setTyre("fl", {
-            outer: 5,
-            mid: 5,
-            inner: 5,
-            make: "Falken",
+            outer: 4,
+            mid: 4,
+            inner: 4,
+            make: "FALKEN",
             size: "235/50R19 103Y",
             notes: ""
         });
@@ -317,7 +312,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `TEST FRONT LEFT TYRE ${WIP_NUMBER}`;
+                        : `TEST FL 4/4/4 FALKEN ${WIP_NUMBER}`;
             }
         }
     }
@@ -344,7 +339,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.18 ready";
+        status.textContent = "v0.18.1 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
@@ -360,7 +355,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `TEST FRONT LEFT TYRE ${WIP_NUMBER}`;
+                : `TEST FL 4/4/4 FALKEN ${WIP_NUMBER}`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
