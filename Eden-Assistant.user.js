@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.8
-// @description  Opens Eden 1 Vue, enters WIP 31583 and presses the correct Search button
+// @version      0.9
+// @description  Opens Eden 1 Vue, enters WIP 31583 and presses Search using real pointer and mouse events
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -109,7 +109,7 @@
                 )
             ];
 
-            const button = candidates.find(element => {
+            const label = candidates.find(element => {
                 if (!isVisible(element)) return false;
                 const text = normalise(
                     element.innerText ||
@@ -120,14 +120,71 @@
                 return text === "search";
             });
 
-            if (button) {
-                return button.closest("a, button, [role='button']") || button;
+            if (label) {
+                return label.closest("a, button, [role='button']") || label;
             }
 
             container = container.parentElement;
         }
 
         return null;
+    }
+
+    function dispatchRealClick(element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.focus?.();
+
+        const rect = element.getBoundingClientRect();
+        const clientX = rect.left + rect.width / 2;
+        const clientY = rect.top + rect.height / 2;
+
+        const pointerOptions = {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            pointerId: 1,
+            pointerType: "touch",
+            isPrimary: true,
+            clientX,
+            clientY,
+            button: 0,
+            buttons: 1
+        };
+
+        const mouseOptions = {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            view: window,
+            clientX,
+            clientY,
+            button: 0,
+            buttons: 1
+        };
+
+        if (typeof PointerEvent === "function") {
+            element.dispatchEvent(new PointerEvent("pointerdown", pointerOptions));
+        }
+
+        element.dispatchEvent(new MouseEvent("mousedown", mouseOptions));
+
+        if (typeof PointerEvent === "function") {
+            element.dispatchEvent(new PointerEvent("pointerup", {
+                ...pointerOptions,
+                buttons: 0
+            }));
+        }
+
+        element.dispatchEvent(new MouseEvent("mouseup", {
+            ...mouseOptions,
+            buttons: 0
+        }));
+
+        element.dispatchEvent(new MouseEvent("click", {
+            ...mouseOptions,
+            buttons: 0,
+            detail: 1
+        }));
     }
 
     async function enterWipAndSearch() {
@@ -166,11 +223,11 @@
         searchButton.style.outline = "4px solid #4caf50";
         searchButton.style.outlineOffset = "3px";
 
-        setStatus(`WIP ${WIP_NUMBER} entered — pressing Search...`);
-        searchButton.click();
+        setStatus(`WIP ${WIP_NUMBER} entered — sending real click...`);
+        dispatchRealClick(searchButton);
 
-        await sleep(1000);
-        setStatus(`Search pressed for WIP ${WIP_NUMBER}`);
+        await sleep(1200);
+        setStatus(`Real click sent for WIP ${WIP_NUMBER}`);
     }
 
     async function runAssistant() {
@@ -224,7 +281,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.8 ready";
+        status.textContent = "v0.9 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
