@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.18.1
-// @description  Opens Eden 1 Vue, searches WIP 31583, tests Inspection and Front Left tyre values
+// @version      0.18.2
+// @description  Opens Eden 1 Vue, searches WIP 31583, tests Inspection and Front Left tyre values with jQuery save events
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -52,22 +52,35 @@
     }
 
     function setInputValue(input, value) {
+        const stringValue = String(value);
         const setter = Object.getOwnPropertyDescriptor(
             HTMLInputElement.prototype,
             "value"
         )?.set;
 
-        if (setter) setter.call(input, String(value));
-        else input.value = String(value);
+        if (setter) setter.call(input, stringValue);
+        else input.value = stringValue;
 
         input.dispatchEvent(new Event("input", { bubbles: true }));
         input.dispatchEvent(new Event("change", { bubbles: true }));
         input.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true }));
+
+        if (window.jQuery) {
+            window.jQuery(input)
+                .val(stringValue)
+                .trigger("input")
+                .trigger("change");
+        }
     }
 
     function commitInput(input) {
-        input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
-        input.blur();
+        if (window.jQuery) {
+            window.jQuery(input).trigger("change").trigger("blur");
+        } else {
+            input.dispatchEvent(new Event("change", { bubbles: true }));
+            input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+            input.blur();
+        }
     }
 
     function triggerClick(element) {
@@ -212,10 +225,21 @@
 
         for (const [name, element] of Object.entries(fields)) {
             if (!(name in data)) continue;
+
             element.focus();
             setInputValue(element, data[name]);
+            await sleep(150);
             commitInput(element);
-            await sleep(250);
+            await sleep(700);
+
+            const expected = String(data[name]);
+            if (String(element.value) !== expected) {
+                setStatus(
+                    `Tyre ${side.toUpperCase()} ${name} reverted to ${element.value}`,
+                    true
+                );
+                return false;
+            }
         }
 
         const container = document.getElementById(`vhctyre_${side}_outer`);
@@ -224,7 +248,9 @@
             container.style.outlineOffset = "2px";
         }
 
-        setStatus(`Tyre ${side.toUpperCase()} filled`);
+        setStatus(
+            `Tyre ${side.toUpperCase()} = ${data.outer}/${data.mid}/${data.inner} ${data.make}`
+        );
         return true;
     }
 
@@ -312,7 +338,7 @@
                 button.textContent =
                     location.hostname === "login.eden1vision.com"
                         ? "OPEN EDEN 1 VUE"
-                        : `TEST FL 4/4/4 FALKEN ${WIP_NUMBER}`;
+                        : `TEST FL SAVE 4/4/4 FALKEN ${WIP_NUMBER}`;
             }
         }
     }
@@ -339,7 +365,7 @@
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.18.1 ready";
+        status.textContent = "v0.18.2 ready";
         Object.assign(status.style, {
             maxWidth: "300px",
             padding: "9px 12px",
@@ -355,7 +381,7 @@
         button.textContent =
             location.hostname === "login.eden1vision.com"
                 ? "OPEN EDEN 1 VUE"
-                : `TEST FL 4/4/4 FALKEN ${WIP_NUMBER}`;
+                : `TEST FL SAVE 4/4/4 FALKEN ${WIP_NUMBER}`;
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
