@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.21
-// @description  Accepts a WIP number, opens Eden 1 Vue, searches the WIP and opens Inspection without changing VHC data
+// @version      0.22
+// @description  Accepts a WIP number, opens Inspection and safely limits Work Description text to 96 characters
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -14,7 +14,8 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.21";
+    const VERSION = "0.22";
+    const MAX_WORK_DESCRIPTION_LENGTH = 96;
     const STORAGE_KEY = "edenAssistantWip";
     const AUTO_HASH = "#eden-assistant-search-wip";
     const EDEN_VUE_URL =
@@ -54,7 +55,7 @@
     }
 
     function setInputValue(input, value) {
-        const stringValue = String(value);
+        const stringValue = String(value ?? "");
         const setter = Object.getOwnPropertyDescriptor(
             HTMLInputElement.prototype,
             "value"
@@ -110,6 +111,20 @@
         );
     }
 
+    function limitWorkDescription(value) {
+        const original = String(value ?? "");
+        const limited = original.slice(0, MAX_WORK_DESCRIPTION_LENGTH);
+
+        if (original.length > MAX_WORK_DESCRIPTION_LENGTH) {
+            console.warn(
+                `[Eden Assistant] Work description shortened from ` +
+                `${original.length} to ${MAX_WORK_DESCRIPTION_LENGTH} characters.`
+            );
+        }
+
+        return limited;
+    }
+
     async function openTab(tabId, paneId, href) {
         const tab = await waitForElement(() => {
             const element =
@@ -143,8 +158,8 @@
         return true;
     }
 
-    // Prepared universal helper for later VHC versions.
-    async function setInspectionItem(itemName, colour, description) {
+    // Universal Inspection helper for upcoming vehicle data.
+    async function setInspectionItem(itemName, colour, description = "") {
         const row = Array.from(
             document.querySelectorAll("#vhcinspection .servline_vhc[job]")
         ).find(element =>
@@ -160,9 +175,8 @@
             red: ".vhcbtn.btn-danger, .vhcbtn[class*='_red']"
         };
 
-        const button = row.querySelector(
-            selectors[String(colour).trim().toLowerCase()]
-        );
+        const normalisedColour = String(colour).trim().toLowerCase();
+        const button = row.querySelector(selectors[normalisedColour]);
         if (!button) return false;
 
         triggerClick(button);
@@ -173,13 +187,23 @@
         );
         if (!descriptionInput) return false;
 
+        const safeDescription = limitWorkDescription(description);
+        descriptionInput.maxLength = MAX_WORK_DESCRIPTION_LENGTH;
         descriptionInput.focus();
-        setInputValue(descriptionInput, description);
+        setInputValue(descriptionInput, safeDescription);
         commitInput(descriptionInput);
+
+        if (String(description ?? "").length > MAX_WORK_DESCRIPTION_LENGTH) {
+            setStatus(
+                `${itemName}: description shortened to ` +
+                `${MAX_WORK_DESCRIPTION_LENGTH} characters`
+            );
+        }
+
         return true;
     }
 
-    // Prepared universal helper for later tyre versions.
+    // Universal Tyres helper for upcoming vehicle data.
     async function setTyre(side, data) {
         const allowedSides = ["fl", "fr", "rl", "rr", "spare"];
         if (!allowedSides.includes(side)) return false;
@@ -242,7 +266,18 @@
         );
 
         if (!inspectionOpened) return;
-        setStatus(`WIP ${wipNumber}: Inspection opened`);
+
+        document.querySelectorAll(
+            "#vhcinspection input.vhcjobdesc, " +
+            "#vhcinspection input[id^='vhcjobdesc_']"
+        ).forEach(field => {
+            field.maxLength = MAX_WORK_DESCRIPTION_LENGTH;
+        });
+
+        setStatus(
+            `WIP ${wipNumber}: Inspection opened · ` +
+            `Work Description max ${MAX_WORK_DESCRIPTION_LENGTH}`
+        );
     }
 
     async function runAssistant() {
