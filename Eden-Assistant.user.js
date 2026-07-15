@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.20
-// @description  Opens Eden 1 Vue, searches WIP 31583 and opens Inspection without changing VHC data
+// @version      0.21
+// @description  Accepts a WIP number, opens Eden 1 Vue, searches the WIP and opens Inspection without changing VHC data
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -14,12 +14,14 @@
 (function () {
     "use strict";
 
-    const WIP_NUMBER = "31583";
+    const VERSION = "0.21";
+    const STORAGE_KEY = "edenAssistantWip";
     const AUTO_HASH = "#eden-assistant-search-wip";
     const EDEN_VUE_URL =
         "https://eden.dealfile.co.uk/dealcrm_codeweavers/main.asp";
 
-    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const sleep = milliseconds =>
+        new Promise(resolve => setTimeout(resolve, milliseconds));
 
     function isVisible(element) {
         if (!element) return false;
@@ -97,9 +99,15 @@
         }));
     }
 
-    async function openEdenVue() {
-        setStatus("Opening Eden 1 Vue...");
-        window.location.assign(EDEN_VUE_URL + AUTO_HASH);
+    function normaliseWip(value) {
+        return String(value || "").replace(/\D/g, "").trim();
+    }
+
+    function getEnteredWip() {
+        const panelInput = document.getElementById("edenAssistantWipInput");
+        return normaliseWip(
+            panelInput?.value || localStorage.getItem(STORAGE_KEY) || ""
+        );
     }
 
     async function openTab(tabId, paneId, href) {
@@ -135,30 +143,46 @@
         return true;
     }
 
-    // Prepared for later versions. Not called by v0.20.
-    async function setAllInspectionDescriptions(description) {
-        const fields = Array.from(document.querySelectorAll(
-            "#vhcinspection input.vhcjobdesc, " +
-            "#vhcinspection input[id^='vhcjobdesc_']"
-        )).filter(isVisible);
+    // Prepared universal helper for later VHC versions.
+    async function setInspectionItem(itemName, colour, description) {
+        const row = Array.from(
+            document.querySelectorAll("#vhcinspection .servline_vhc[job]")
+        ).find(element =>
+            String(element.getAttribute("job") || "").trim().toLowerCase() ===
+            String(itemName).trim().toLowerCase()
+        );
 
-        for (const field of fields) {
-            field.focus();
-            setInputValue(field, description);
-            await sleep(100);
-            commitInput(field);
-            await sleep(350);
-        }
+        if (!row) return false;
 
-        return fields.length;
+        const selectors = {
+            green: ".vhcbtn.btn-success, .vhcbtn[class*='_green']",
+            amber: ".vhcbtn.btn-warning, .vhcbtn[class*='_amber']",
+            red: ".vhcbtn.btn-danger, .vhcbtn[class*='_red']"
+        };
+
+        const button = row.querySelector(
+            selectors[String(colour).trim().toLowerCase()]
+        );
+        if (!button) return false;
+
+        triggerClick(button);
+        await sleep(700);
+
+        const descriptionInput = row.querySelector(
+            "input.vhcjobdesc, input[id^='vhcjobdesc_']"
+        );
+        if (!descriptionInput) return false;
+
+        descriptionInput.focus();
+        setInputValue(descriptionInput, description);
+        commitInput(descriptionInput);
+        return true;
     }
 
-    // Prepared for later versions. Not called by v0.20.
+    // Prepared universal helper for later tyre versions.
     async function setTyre(side, data) {
         const allowedSides = ["fl", "fr", "rl", "rr", "spare"];
-        if (!allowedSides.includes(side)) {
-            throw new Error(`Unsupported tyre side: ${side}`);
-        }
+        if (!allowedSides.includes(side)) return false;
 
         const fields = {
             outer: document.getElementById(`x_${side}_outer`),
@@ -181,13 +205,13 @@
         return true;
     }
 
-    async function runDealfileFlow() {
+    async function runDealfileFlow(wipNumber) {
         setStatus("Looking for WIP field...");
 
         const input = await waitForElement(() => {
             const element = document.getElementById("x_searchwip");
             return isVisible(element) ? element : null;
-        });
+        }, 20000);
 
         if (!input) {
             setStatus("WIP field not found", true);
@@ -195,7 +219,7 @@
         }
 
         input.focus();
-        setInputValue(input, WIP_NUMBER);
+        setInputValue(input, wipNumber);
         await sleep(500);
 
         const searchButton = await waitForElement(() => {
@@ -208,7 +232,7 @@
             return;
         }
 
-        setStatus(`Searching WIP ${WIP_NUMBER}...`);
+        setStatus(`Searching WIP ${wipNumber}...`);
         triggerClick(searchButton);
 
         const inspectionOpened = await openTab(
@@ -218,11 +242,21 @@
         );
 
         if (!inspectionOpened) return;
-        setStatus(`WIP ${WIP_NUMBER}: Inspection opened`);
+        setStatus(`WIP ${wipNumber}: Inspection opened`);
     }
 
     async function runAssistant() {
+        const wipNumber = getEnteredWip();
         const button = document.getElementById("edenAssistantButton");
+
+        if (!wipNumber) {
+            setStatus("Enter WIP No", true);
+            document.getElementById("edenAssistantWipInput")?.focus();
+            return;
+        }
+
+        localStorage.setItem(STORAGE_KEY, wipNumber);
+
         if (button) {
             button.disabled = true;
             button.textContent = "WORKING...";
@@ -230,19 +264,24 @@
 
         try {
             if (location.hostname === "login.eden1vision.com") {
-                await openEdenVue();
-            } else if (location.hostname === "eden.dealfile.co.uk") {
-                await runDealfileFlow();
-            } else {
-                setStatus("Unsupported page", true);
+                setStatus(`Opening Eden 1 Vue for WIP ${wipNumber}...`);
+                window.location.assign(EDEN_VUE_URL + AUTO_HASH);
+                return;
             }
+
+            if (location.hostname === "eden.dealfile.co.uk") {
+                await runDealfileFlow(wipNumber);
+                return;
+            }
+
+            setStatus("Unsupported page", true);
         } catch (error) {
             console.error(error);
             setStatus(`Error: ${error.message || error}`, true);
         } finally {
             if (button) {
                 button.disabled = false;
-                button.textContent = "EDEN ASSISTANT";
+                button.textContent = "START";
             }
         }
     }
@@ -263,39 +302,67 @@
             zIndex: "2147483647",
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-end",
-            gap: "8px"
+            alignItems: "stretch",
+            gap: "8px",
+            width: "210px"
         });
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
-        status.textContent = "v0.20 ready";
+        status.textContent = `Eden Assistant v${VERSION}`;
         Object.assign(status.style, {
-            maxWidth: "320px",
             padding: "9px 12px",
             borderRadius: "9px",
             background: "#263238",
             color: "#fff",
             fontSize: "13px",
+            textAlign: "center",
             boxShadow: "0 3px 10px rgba(0,0,0,.45)"
+        });
+
+        const wipInput = document.createElement("input");
+        wipInput.id = "edenAssistantWipInput";
+        wipInput.type = "tel";
+        wipInput.inputMode = "numeric";
+        wipInput.placeholder = "WIP No";
+        wipInput.value = localStorage.getItem(STORAGE_KEY) || "";
+        Object.assign(wipInput.style, {
+            boxSizing: "border-box",
+            width: "100%",
+            padding: "12px",
+            border: "2px solid #1565c0",
+            borderRadius: "10px",
+            background: "#fff",
+            color: "#111",
+            fontSize: "18px",
+            textAlign: "center",
+            boxShadow: "0 3px 10px rgba(0,0,0,.35)"
+        });
+
+        wipInput.addEventListener("input", () => {
+            wipInput.value = normaliseWip(wipInput.value);
+        });
+        wipInput.addEventListener("keydown", event => {
+            if (event.key === "Enter") runAssistant();
         });
 
         const button = document.createElement("button");
         button.id = "edenAssistantButton";
-        button.textContent = "EDEN ASSISTANT";
+        button.textContent = "START";
         Object.assign(button.style, {
             padding: "14px 17px",
             border: "2px solid white",
             borderRadius: "12px",
             background: "#1565c0",
             color: "#fff",
-            fontSize: "15px",
+            fontSize: "16px",
             fontWeight: "bold",
             boxShadow: "0 3px 10px rgba(0,0,0,.45)"
         });
 
         button.addEventListener("click", runAssistant);
         panel.appendChild(status);
+        panel.appendChild(wipInput);
         panel.appendChild(button);
         document.body.appendChild(panel);
     }
@@ -312,6 +379,9 @@
         location.hash === AUTO_HASH
     ) {
         history.replaceState(null, "", location.pathname + location.search);
-        setTimeout(runDealfileFlow, 1200);
+        const storedWip = normaliseWip(localStorage.getItem(STORAGE_KEY));
+        if (storedWip) {
+            setTimeout(() => runDealfileFlow(storedWip), 1200);
+        }
     }
 })();
