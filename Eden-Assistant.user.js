@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.26
+// @version      0.27
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,11 +14,11 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.26";
+    const VERSION = "0.27";
     const ACTIVE_WIP = "31474";
     const ACTIVE_VEHICLE = "KO24 LZL";
     const MAX_WORK_DESCRIPTION_LENGTH = 96;
-    const PENDING_KEY = "edenAssistantPendingRun";
+    const WINDOW_MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const VEHICLE_PROFILES = {
         "31726": {
@@ -42,9 +42,7 @@
         "31474": {
             inspection: {
                 defaultColour: "green",
-                colours: {
-                    "Misc": "red"
-                },
+                colours: { "Misc": "red" },
                 comments: {
                     "Brake Pads/Shoes - Front": "Current 11.0 mm; minimum 2.5 mm; approximately 100% remaining.",
                     "Brake Discs/Drums - Front": "Current 29.8 mm; minimum 28.0 mm; approximately 90% remaining.",
@@ -109,21 +107,26 @@
 
     function triggerClick(element) {
         if (!element) return;
-        if (typeof element.click === "function") {
-            element.click();
-            return;
-        }
-        element.dispatchEvent(new MouseEvent("click", {
-            bubbles: true,
-            cancelable: true,
-            composed: true,
-            view: window
-        }));
+        if (window.jQuery) window.jQuery(element).trigger("click");
+        else if (typeof element.click === "function") element.click();
+        else element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, composed: true, view: window }));
+    }
+
+    function writePendingMarker() {
+        window.name = `${WINDOW_MARKER}${ACTIVE_WIP}`;
+    }
+
+    function readPendingMarker() {
+        const value = String(window.name || "");
+        return value.startsWith(WINDOW_MARKER) ? value.slice(WINDOW_MARKER.length) : "";
+    }
+
+    function clearPendingMarker() {
+        if (String(window.name || "").startsWith(WINDOW_MARKER)) window.name = "";
     }
 
     function findEdenVueTile() {
-        const anchors = Array.from(document.querySelectorAll("a"));
-        return anchors.find(anchor => {
+        return Array.from(document.querySelectorAll("a")).find(anchor => {
             const text = String(anchor.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
             const href = String(anchor.getAttribute("href") || "").toLowerCase();
             return text.includes("eden 1 vue") || href.includes("dealcrm_codeweavers/main.asp");
@@ -135,13 +138,13 @@
             const element = findEdenVueTile();
             return element && isVisible(element) ? element : null;
         }, 12000);
-
         if (!tile) throw new Error("Eden 1 Vue tile not found");
 
-        localStorage.setItem(PENDING_KEY, ACTIVE_WIP);
+        writePendingMarker();
+        tile.setAttribute("target", "_self");
         tile.scrollIntoView({ block: "center", inline: "center" });
         setStatus(`Opening Eden 1 Vue • WIP ${ACTIVE_WIP}...`);
-        await sleep(150);
+        await sleep(200);
         triggerClick(tile);
     }
 
@@ -159,7 +162,6 @@
         }, 10000);
         if (!pane) throw new Error(`${paneId} did not open`);
         await sleep(600);
-        return true;
     }
 
     async function setInspectionRow(row, colour, description = "") {
@@ -220,7 +222,7 @@
         if (!profile) throw new Error(`No prepared profile for WIP ${wip}`);
         await fillInspection(profile.inspection);
         await fillTyres(profile.tyres);
-        localStorage.removeItem(PENDING_KEY);
+        clearPendingMarker();
         setStatus(`WIP ${wip}: filled — CHECK BEFORE SAVE`);
     }
 
@@ -229,16 +231,18 @@
         const input = await waitForElement(() => {
             const element = document.getElementById("x_searchwip");
             return isVisible(element) ? element : null;
-        }, 25000);
+        }, 30000);
         if (!input) throw new Error("WIP field not found");
         input.focus();
         setInputValue(input, wip);
         await sleep(500);
+
         const search = await waitForElement(() => {
             const element = document.getElementById("mainsearchbuts_serv");
             return isVisible(element) ? element : null;
-        }, 10000);
+        }, 12000);
         if (!search) throw new Error("Search control not found");
+
         setStatus(`Searching WIP ${wip}...`);
         triggerClick(search);
         await openTab("vhctab_inpection", "vhcinspection", "#vhcinspection");
@@ -247,18 +251,14 @@
 
     async function runAssistant() {
         const button = document.getElementById("edenAssistantButton");
-        if (button) {
-            button.disabled = true;
-            button.textContent = "WORKING...";
-        }
-
+        if (button) { button.disabled = true; button.textContent = "WORKING..."; }
         try {
             if (location.hostname === "login.eden1vision.com") {
                 await openEdenVue();
                 return;
             }
             if (location.hostname === "eden.dealfile.co.uk") {
-                localStorage.setItem(PENDING_KEY, ACTIVE_WIP);
+                writePendingMarker();
                 await runDealfileFlow(ACTIVE_WIP);
                 return;
             }
@@ -267,71 +267,29 @@
             console.error(error);
             setStatus(`Error: ${error.message || error}`, true);
         } finally {
-            if (button) {
-                button.disabled = false;
-                button.textContent = "START";
-            }
+            if (button) { button.disabled = false; button.textContent = "START"; }
         }
     }
 
     function createPanel() {
         if (document.getElementById("edenAssistantPanel") || !document.body) return;
-
         const panel = document.createElement("div");
         panel.id = "edenAssistantPanel";
-        Object.assign(panel.style, {
-            position: "fixed",
-            right: "10px",
-            bottom: "85px",
-            zIndex: "2147483647",
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-            width: "220px"
-        });
+        Object.assign(panel.style, { position: "fixed", right: "10px", bottom: "85px", zIndex: "2147483647", display: "flex", flexDirection: "column", gap: "8px", width: "220px" });
 
         const status = document.createElement("div");
         status.id = "edenAssistantStatus";
         status.textContent = `Eden Assistant v${VERSION}`;
-        Object.assign(status.style, {
-            padding: "9px 12px",
-            borderRadius: "9px",
-            background: "#263238",
-            color: "#fff",
-            fontSize: "13px",
-            textAlign: "center",
-            boxShadow: "0 3px 10px rgba(0,0,0,.45)"
-        });
+        Object.assign(status.style, { padding: "9px 12px", borderRadius: "9px", background: "#263238", color: "#fff", fontSize: "13px", textAlign: "center", boxShadow: "0 3px 10px rgba(0,0,0,.45)" });
 
         const vehicleInfo = document.createElement("div");
         vehicleInfo.textContent = `WIP ${ACTIVE_WIP} • ${ACTIVE_VEHICLE}`;
-        Object.assign(vehicleInfo.style, {
-            boxSizing: "border-box",
-            width: "100%",
-            padding: "12px",
-            border: "2px solid #1565c0",
-            borderRadius: "10px",
-            background: "#fff",
-            color: "#111",
-            fontSize: "17px",
-            fontWeight: "bold",
-            textAlign: "center",
-            boxShadow: "0 3px 10px rgba(0,0,0,.35)"
-        });
+        Object.assign(vehicleInfo.style, { boxSizing: "border-box", width: "100%", padding: "12px", border: "2px solid #1565c0", borderRadius: "10px", background: "#fff", color: "#111", fontSize: "17px", fontWeight: "bold", textAlign: "center", boxShadow: "0 3px 10px rgba(0,0,0,.35)" });
 
         const button = document.createElement("button");
         button.id = "edenAssistantButton";
         button.textContent = "START";
-        Object.assign(button.style, {
-            padding: "14px 17px",
-            border: "2px solid white",
-            borderRadius: "12px",
-            background: "#1565c0",
-            color: "#fff",
-            fontSize: "16px",
-            fontWeight: "bold",
-            boxShadow: "0 3px 10px rgba(0,0,0,.45)"
-        });
+        Object.assign(button.style, { padding: "14px 17px", border: "2px solid white", borderRadius: "12px", background: "#1565c0", color: "#fff", fontSize: "16px", fontWeight: "bold", boxShadow: "0 3px 10px rgba(0,0,0,.45)" });
         button.addEventListener("click", runAssistant);
 
         panel.append(status, vehicleInfo, button);
@@ -339,15 +297,12 @@
     }
 
     createPanel();
-    new MutationObserver(createPanel).observe(document.documentElement, {
-        childList: true,
-        subtree: true
-    });
+    new MutationObserver(createPanel).observe(document.documentElement, { childList: true, subtree: true });
 
     if (location.hostname === "eden.dealfile.co.uk") {
-        const pendingWip = localStorage.getItem(PENDING_KEY);
+        const pendingWip = readPendingMarker();
         if (pendingWip === ACTIVE_WIP) {
-            setTimeout(() => runDealfileFlow(ACTIVE_WIP), 1500);
+            setTimeout(() => runDealfileFlow(ACTIVE_WIP), 1800);
         }
     }
 })();
