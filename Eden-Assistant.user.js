@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.24
+// @version      0.25
 // @description  Opens a WIP and fills prepared Inspection and Tyres data without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,16 +14,16 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.24";
+    const VERSION = "0.25";
     const MAX_WORK_DESCRIPTION_LENGTH = 96;
     const STORAGE_KEY = "edenAssistantWip";
     const AUTO_HASH = "#eden-assistant-search-wip";
-    const EDEN_VUE_URL = "https://eden.dealfile.co.uk/dealcrm_codeweavers/main.asp";
 
     const VEHICLE_PROFILES = {
         "31726": {
             inspection: {
                 defaultColour: "green",
+                colours: {},
                 comments: {
                     "Brake Pads/Shoes - Front": "Current 4.3 mm; minimum 2.0 mm; approximately 26% remaining.",
                     "Brake Discs/Drums - Front": "LH 27.2 mm, RH 27.0 mm; minimum 26.0 mm; 60%/50% remaining.",
@@ -36,6 +36,27 @@
                 fr: { outer: 5, mid: 5, inner: 5, make: "TOYO", size: "225/55 R19 99V", notes: "" },
                 rl: { outer: 7, mid: 7, inner: 7, make: "TOYO", size: "225/55 R19 99V", notes: "" },
                 rr: { outer: 7, mid: 7, inner: 7, make: "TOYO", size: "225/55 R19 99V", notes: "" }
+            }
+        },
+        "31474": {
+            inspection: {
+                defaultColour: "green",
+                colours: {
+                    "Misc": "red"
+                },
+                comments: {
+                    "Brake Pads/Shoes - Front": "Current 11.0 mm; minimum 2.5 mm; approximately 100% remaining.",
+                    "Brake Discs/Drums - Front": "Current 29.8 mm; minimum 28.0 mm; approximately 90% remaining.",
+                    "Brake Pads/Shoes - Rear": "Current 8.0 mm; minimum 2.0 mm; approximately 75% remaining.",
+                    "Brake Discs/Drums - Rear": "Current 9.8 mm; minimum 8.0 mm; approximately 90% remaining.",
+                    "Misc": "Fuel flap damaged. Charging pad inoperative. Recommend replacement and diagnosis."
+                }
+            },
+            tyres: {
+                fl: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19 103V", notes: "" },
+                fr: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19 103V", notes: "" },
+                rl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19 103V", notes: "" },
+                rr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19 103V", notes: "" }
             }
         }
     };
@@ -142,8 +163,9 @@
         for (let i = 0; i < rows.length; i += 1) {
             const row = rows[i];
             const item = String(row.getAttribute("job") || "").trim();
+            const colour = profile.colours?.[item] || profile.defaultColour;
             setStatus(`Inspection ${i + 1}/${rows.length}: ${item}`);
-            await setInspectionRow(row, profile.defaultColour, profile.comments[item] || "");
+            await setInspectionRow(row, colour, profile.comments[item] || "");
         }
     }
 
