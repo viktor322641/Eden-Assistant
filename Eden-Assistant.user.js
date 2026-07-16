@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.22
-// @description  Accepts a WIP number, opens Inspection and safely limits Work Description text to 96 characters
+// @version      0.23
+// @description  Opens a WIP and fills prepared Inspection and Tyres data without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
 // @updateURL    https://raw.githubusercontent.com/viktor322641/Eden-Assistant/main/Eden-Assistant.user.js
@@ -14,12 +14,32 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.22";
+    const VERSION = "0.23";
     const MAX_WORK_DESCRIPTION_LENGTH = 96;
     const STORAGE_KEY = "edenAssistantWip";
     const AUTO_HASH = "#eden-assistant-search-wip";
     const EDEN_VUE_URL =
         "https://eden.dealfile.co.uk/dealcrm_codeweavers/main.asp";
+
+    const VEHICLE_PROFILES = {
+        "31480": {
+            inspection: {
+                defaultColour: "green",
+                comments: {
+                    "Brake Pads/Shoes - Front": "Current 11.0 mm; minimum 2.0 mm; approximately 95% remaining.",
+                    "Brake Discs/Drums - Front": "Current 25.8 mm; minimum 23.0 mm; approximately 100% remaining.",
+                    "Brake Pads/Shoes - Rear": "Current 7.0 mm; minimum 2.0 mm; approximately 63% remaining.",
+                    "Brake Discs/Drums - Rear": "Current 9.9 mm; minimum 8.4 mm; approximately 94% remaining."
+                }
+            },
+            tyres: {
+                fl: { outer: 4, mid: 4, inner: 4, make: "AVON", size: "215/55 R17 94W", notes: "" },
+                fr: { outer: 4, mid: 4, inner: 4, make: "AVON", size: "215/55 R17 94W", notes: "" },
+                rl: { outer: 8, mid: 8, inner: 8, make: "GOODYEAR", size: "215/55 R17 94W", notes: "" },
+                rr: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "215/55 R17 94W", notes: "" }
+            }
+        }
+    };
 
     const sleep = milliseconds =>
         new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -28,12 +48,9 @@
         if (!element) return false;
         const style = window.getComputedStyle(element);
         const rect = element.getBoundingClientRect();
-        return (
-            style.display !== "none" &&
+        return style.display !== "none" &&
             style.visibility !== "hidden" &&
-            rect.width > 0 &&
-            rect.height > 0
-        );
+            rect.width > 0 && rect.height > 0;
     }
 
     function setStatus(message, isError = false) {
@@ -91,7 +108,6 @@
             window.jQuery(element).trigger("click");
             return;
         }
-
         element.dispatchEvent(new MouseEvent("click", {
             bubbles: true,
             cancelable: true,
@@ -112,23 +128,12 @@
     }
 
     function limitWorkDescription(value) {
-        const original = String(value ?? "");
-        const limited = original.slice(0, MAX_WORK_DESCRIPTION_LENGTH);
-
-        if (original.length > MAX_WORK_DESCRIPTION_LENGTH) {
-            console.warn(
-                `[Eden Assistant] Work description shortened from ` +
-                `${original.length} to ${MAX_WORK_DESCRIPTION_LENGTH} characters.`
-            );
-        }
-
-        return limited;
+        return String(value ?? "").slice(0, MAX_WORK_DESCRIPTION_LENGTH);
     }
 
     async function openTab(tabId, paneId, href) {
         const tab = await waitForElement(() => {
-            const element =
-                document.getElementById(tabId) ||
+            const element = document.getElementById(tabId) ||
                 document.querySelector(`a[href="${href}"]`);
             return isVisible(element) ? element : null;
         }, 20000);
@@ -141,7 +146,7 @@
         if (window.jQuery && typeof window.jQuery(tab).tab === "function") {
             window.jQuery(tab).tab("show");
         } else {
-            tab.click();
+            triggerClick(tab);
         }
 
         const pane = await waitForElement(() => {
@@ -154,60 +159,56 @@
             return false;
         }
 
-        await sleep(500);
+        await sleep(600);
         return true;
     }
 
-    // Universal Inspection helper for upcoming vehicle data.
-    async function setInspectionItem(itemName, colour, description = "") {
-        const row = Array.from(
+    function getInspectionRows() {
+        return Array.from(
             document.querySelectorAll("#vhcinspection .servline_vhc[job]")
-        ).find(element =>
-            String(element.getAttribute("job") || "").trim().toLowerCase() ===
-            String(itemName).trim().toLowerCase()
         );
+    }
 
-        if (!row) return false;
-
+    async function setInspectionRow(row, colour, description = "") {
         const selectors = {
             green: ".vhcbtn.btn-success, .vhcbtn[class*='_green']",
             amber: ".vhcbtn.btn-warning, .vhcbtn[class*='_amber']",
             red: ".vhcbtn.btn-danger, .vhcbtn[class*='_red']"
         };
 
-        const normalisedColour = String(colour).trim().toLowerCase();
-        const button = row.querySelector(selectors[normalisedColour]);
+        const button = row.querySelector(selectors[colour]);
         if (!button) return false;
 
         triggerClick(button);
-        await sleep(700);
+        await sleep(350);
 
-        const descriptionInput = row.querySelector(
+        const input = row.querySelector(
             "input.vhcjobdesc, input[id^='vhcjobdesc_']"
         );
-        if (!descriptionInput) return false;
-
-        const safeDescription = limitWorkDescription(description);
-        descriptionInput.maxLength = MAX_WORK_DESCRIPTION_LENGTH;
-        descriptionInput.focus();
-        setInputValue(descriptionInput, safeDescription);
-        commitInput(descriptionInput);
-
-        if (String(description ?? "").length > MAX_WORK_DESCRIPTION_LENGTH) {
-            setStatus(
-                `${itemName}: description shortened to ` +
-                `${MAX_WORK_DESCRIPTION_LENGTH} characters`
-            );
+        if (input) {
+            input.maxLength = MAX_WORK_DESCRIPTION_LENGTH;
+            input.focus();
+            setInputValue(input, limitWorkDescription(description));
+            commitInput(input);
+            await sleep(350);
         }
-
         return true;
     }
 
-    // Universal Tyres helper for upcoming vehicle data.
-    async function setTyre(side, data) {
-        const allowedSides = ["fl", "fr", "rl", "rr", "spare"];
-        if (!allowedSides.includes(side)) return false;
+    async function fillInspection(profile) {
+        const rows = getInspectionRows();
+        if (!rows.length) throw new Error("Inspection rows not found");
 
+        for (let index = 0; index < rows.length; index += 1) {
+            const row = rows[index];
+            const itemName = String(row.getAttribute("job") || "").trim();
+            const description = profile.comments[itemName] || "";
+            setStatus(`Inspection ${index + 1}/${rows.length}: ${itemName}`);
+            await setInspectionRow(row, profile.defaultColour, description);
+        }
+    }
+
+    async function setTyre(side, data) {
         const fields = {
             outer: document.getElementById(`x_${side}_outer`),
             mid: document.getElementById(`x_${side}_mid`),
@@ -221,26 +222,42 @@
             if (!element || !(name in data)) continue;
             element.focus();
             setInputValue(element, data[name]);
-            await sleep(150);
+            await sleep(120);
             commitInput(element);
-            await sleep(700);
+            await sleep(550);
+        }
+    }
+
+    async function fillTyres(tyres) {
+        const opened = await openTab("vhctab_tyres", "vhctyres", "#vhctyres");
+        if (!opened) throw new Error("Tyres tab did not open");
+
+        for (const side of ["fl", "fr", "rl", "rr"]) {
+            setStatus(`Tyres: ${side.toUpperCase()}`);
+            await setTyre(side, tyres[side]);
+        }
+    }
+
+    async function applyVehicleProfile(wipNumber) {
+        const profile = VEHICLE_PROFILES[wipNumber];
+        if (!profile) {
+            setStatus(`WIP ${wipNumber}: no prepared data; Inspection opened`);
+            return;
         }
 
-        return true;
+        await fillInspection(profile.inspection);
+        await fillTyres(profile.tyres);
+        setStatus(`WIP ${wipNumber}: filled — CHECK BEFORE SAVE`);
     }
 
     async function runDealfileFlow(wipNumber) {
         setStatus("Looking for WIP field...");
-
         const input = await waitForElement(() => {
             const element = document.getElementById("x_searchwip");
             return isVisible(element) ? element : null;
         }, 20000);
 
-        if (!input) {
-            setStatus("WIP field not found", true);
-            return;
-        }
+        if (!input) throw new Error("WIP field not found");
 
         input.focus();
         setInputValue(input, wipNumber);
@@ -251,33 +268,19 @@
             return isVisible(element) ? element : null;
         }, 10000);
 
-        if (!searchButton) {
-            setStatus("Search control not found", true);
-            return;
-        }
+        if (!searchButton) throw new Error("Search control not found");
 
         setStatus(`Searching WIP ${wipNumber}...`);
         triggerClick(searchButton);
 
-        const inspectionOpened = await openTab(
+        const opened = await openTab(
             "vhctab_inpection",
             "vhcinspection",
             "#vhcinspection"
         );
+        if (!opened) return;
 
-        if (!inspectionOpened) return;
-
-        document.querySelectorAll(
-            "#vhcinspection input.vhcjobdesc, " +
-            "#vhcinspection input[id^='vhcjobdesc_']"
-        ).forEach(field => {
-            field.maxLength = MAX_WORK_DESCRIPTION_LENGTH;
-        });
-
-        setStatus(
-            `WIP ${wipNumber}: Inspection opened · ` +
-            `Work Description max ${MAX_WORK_DESCRIPTION_LENGTH}`
-        );
+        await applyVehicleProfile(wipNumber);
     }
 
     async function runAssistant() {
@@ -291,7 +294,6 @@
         }
 
         localStorage.setItem(STORAGE_KEY, wipNumber);
-
         if (button) {
             button.disabled = true;
             button.textContent = "WORKING...";
@@ -303,12 +305,10 @@
                 window.location.assign(EDEN_VUE_URL + AUTO_HASH);
                 return;
             }
-
             if (location.hostname === "eden.dealfile.co.uk") {
                 await runDealfileFlow(wipNumber);
                 return;
             }
-
             setStatus("Unsupported page", true);
         } catch (error) {
             console.error(error);
@@ -337,7 +337,6 @@
             zIndex: "2147483647",
             display: "flex",
             flexDirection: "column",
-            alignItems: "stretch",
             gap: "8px",
             width: "210px"
         });
@@ -373,7 +372,6 @@
             textAlign: "center",
             boxShadow: "0 3px 10px rgba(0,0,0,.35)"
         });
-
         wipInput.addEventListener("input", () => {
             wipInput.value = normaliseWip(wipInput.value);
         });
@@ -394,8 +392,8 @@
             fontWeight: "bold",
             boxShadow: "0 3px 10px rgba(0,0,0,.45)"
         });
-
         button.addEventListener("click", runAssistant);
+
         panel.appendChild(status);
         panel.appendChild(wipInput);
         panel.appendChild(button);
@@ -403,7 +401,6 @@
     }
 
     createPanel();
-
     new MutationObserver(createPanel).observe(document.documentElement, {
         childList: true,
         subtree: true
