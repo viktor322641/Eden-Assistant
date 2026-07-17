@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.27
+// @version      0.28
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,48 +14,39 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.27";
-    const ACTIVE_WIP = "31474";
-    const ACTIVE_VEHICLE = "KO24 LZL";
+    const VERSION = "0.28";
+    const ACTIVE_WIP = "31540";
+    const ACTIVE_VEHICLE = "DE67 CEJ";
     const MAX_WORK_DESCRIPTION_LENGTH = 96;
     const WINDOW_MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const VEHICLE_PROFILES = {
-        "31726": {
+        "31540": {
             inspection: {
                 defaultColour: "green",
-                colours: {},
+                colours: {
+                    "Brake Discs/Drums - Front": "amber"
+                },
                 comments: {
-                    "Brake Pads/Shoes - Front": "Current 4.3 mm; minimum 2.0 mm; approximately 26% remaining.",
-                    "Brake Discs/Drums - Front": "LH 27.2 mm, RH 27.0 mm; minimum 26.0 mm; 60%/50% remaining.",
-                    "Brake Pads/Shoes - Rear": "Current 7.0 mm; minimum 2.0 mm; approximately 71% remaining.",
-                    "Brake Discs/Drums - Rear": "Current 9.9 mm; minimum 8.0 mm; approximately 95% remaining."
+                    "Brake Pads/Shoes - Front": "Current 5.0 mm; minimum 2.0 mm; approximately 38% remaining.",
+                    "Brake Discs/Drums - Front": "Current 23.3 mm; below minimum 23.4 mm. Replacement recommended.",
+                    "Brake Pads/Shoes - Rear": "Current 5.0 mm; minimum 2.0 mm; approximately 38% remaining.",
+                    "Brake Discs/Drums - Rear": "Current 9.0 mm; minimum 8.4 mm; approximately 38% remaining."
                 }
             },
             tyres: {
-                fl: { outer: 5, mid: 5, inner: 5, make: "TOYO", size: "225/55 R19 99V", notes: "" },
-                fr: { outer: 5, mid: 5, inner: 5, make: "TOYO", size: "225/55 R19 99V", notes: "" },
-                rl: { outer: 7, mid: 7, inner: 7, make: "TOYO", size: "225/55 R19 99V", notes: "" },
-                rr: { outer: 7, mid: 7, inner: 7, make: "TOYO", size: "225/55 R19 99V", notes: "" }
-            }
-        },
-        "31474": {
-            inspection: {
-                defaultColour: "green",
-                colours: { "Misc": "red" },
-                comments: {
-                    "Brake Pads/Shoes - Front": "Current 11.0 mm; minimum 2.5 mm; approximately 100% remaining.",
-                    "Brake Discs/Drums - Front": "Current 29.8 mm; minimum 28.0 mm; approximately 90% remaining.",
-                    "Brake Pads/Shoes - Rear": "Current 8.0 mm; minimum 2.0 mm; approximately 75% remaining.",
-                    "Brake Discs/Drums - Rear": "Current 9.8 mm; minimum 8.0 mm; approximately 90% remaining.",
-                    "Misc": "Fuel flap damaged. Charging pad inoperative. Recommend replacement and diagnosis."
-                }
-            },
-            tyres: {
-                fl: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19 103V", notes: "" },
-                fr: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19 103V", notes: "" },
-                rl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19 103V", notes: "" },
-                rr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19 103V", notes: "" }
+                fl: {
+                    outer: 4,
+                    mid: 4,
+                    inner: 4,
+                    make: "GOODYEAR",
+                    size: "245/45 R19 102W",
+                    notes: "NSF tyre puncture in centre tread. Repair arranged.",
+                    status: "Amber"
+                },
+                fr: { outer: 4, mid: 4, inner: 4, make: "GOODYEAR", size: "245/45 R19 102W", notes: "", status: "Green" },
+                rl: { outer: 5, mid: 5, inner: 5, make: "GOODYEAR", size: "245/45 R19 102W", notes: "", status: "Green" },
+                rr: { outer: 5, mid: 5, inner: 5, make: "GOODYEAR", size: "245/45 R19 102W", notes: "", status: "Green" }
             }
         }
     };
@@ -197,6 +188,13 @@
         }
     }
 
+    function setTyreStatus(side, status) {
+        const hidden = document.getElementById(`x_${side}_statusid`);
+        if (!hidden || !status) return;
+        setInputValue(hidden, status);
+        commitInput(hidden);
+    }
+
     async function setTyre(side, data) {
         for (const name of ["outer", "mid", "inner", "make", "size", "notes"]) {
             const element = document.getElementById(`x_${side}_${name}`);
@@ -207,6 +205,7 @@
             commitInput(element);
             await sleep(550);
         }
+        setTyreStatus(side, data.status);
     }
 
     async function fillTyres(tyres) {
