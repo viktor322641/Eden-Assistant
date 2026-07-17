@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.28
+// @version      0.29
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,294 +14,218 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.28";
-    const ACTIVE_WIP = "31540";
-    const ACTIVE_VEHICLE = "DE67 CEJ";
-    const MAX_WORK_DESCRIPTION_LENGTH = 96;
-    const WINDOW_MARKER = "EDEN_ASSISTANT_PENDING:";
+    const VERSION = "0.29";
+    const ACTIVE_WIP = "31401";
+    const ACTIVE_VEHICLE = "DL74 VVW";
+    const MAX_DESCRIPTION = 96;
+    const MARKER = "EDEN_ASSISTANT_PENDING:";
 
-    const VEHICLE_PROFILES = {
-        "31540": {
-            inspection: {
-                defaultColour: "green",
-                colours: {
-                    "Brake Discs/Drums - Front": "amber"
-                },
-                comments: {
-                    "Brake Pads/Shoes - Front": "Current 5.0 mm; minimum 2.0 mm; approximately 38% remaining.",
-                    "Brake Discs/Drums - Front": "Current 23.3 mm; below minimum 23.4 mm. Replacement recommended.",
-                    "Brake Pads/Shoes - Rear": "Current 5.0 mm; minimum 2.0 mm; approximately 38% remaining.",
-                    "Brake Discs/Drums - Rear": "Current 9.0 mm; minimum 8.4 mm; approximately 38% remaining."
-                }
-            },
-            tyres: {
-                fl: {
-                    outer: 4,
-                    mid: 4,
-                    inner: 4,
-                    make: "GOODYEAR",
-                    size: "245/45 R19 102W",
-                    notes: "NSF tyre puncture in centre tread. Repair arranged.",
-                    status: "Amber"
-                },
-                fr: { outer: 4, mid: 4, inner: 4, make: "GOODYEAR", size: "245/45 R19 102W", notes: "", status: "Green" },
-                rl: { outer: 5, mid: 5, inner: 5, make: "GOODYEAR", size: "245/45 R19 102W", notes: "", status: "Green" },
-                rr: { outer: 5, mid: 5, inner: 5, make: "GOODYEAR", size: "245/45 R19 102W", notes: "", status: "Green" }
+    const PROFILE = {
+        inspection: {
+            defaultColour: "green",
+            colours: {},
+            comments: {
+                "Brake Pads/Shoes - Front": "Current 11.0 mm; minimum 2.0 mm; good condition.",
+                "Brake Discs/Drums - Front": "Current 29.8 mm; minimum 28.0 mm; good condition.",
+                "Brake Pads/Shoes - Rear": "Current 9.0 mm; minimum 2.0 mm; good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.0 mm; minimum 8.0 mm; good condition."
             }
+        },
+        tyres: {
+            fl: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "235/50 R19", notes: "Non-repairable puncture near outer shoulder. Replace NSF tyre.", status: "Red" },
+            fr: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" },
+            rl: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" },
+            rr: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" }
         }
     };
 
     const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-    function isVisible(element) {
-        if (!element) return false;
-        const style = getComputedStyle(element);
-        const rect = element.getBoundingClientRect();
-        return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0;
+    function visible(el) {
+        if (!el) return false;
+        const s = getComputedStyle(el), r = el.getBoundingClientRect();
+        return s.display !== "none" && s.visibility !== "hidden" && r.width > 0 && r.height > 0;
     }
 
-    function setStatus(message, isError = false) {
-        console.log("[Eden Assistant]", message);
-        const status = document.getElementById("edenAssistantStatus");
-        if (!status) return;
-        status.textContent = message;
-        status.style.background = isError ? "#b71c1c" : "#263238";
-    }
-
-    async function waitForElement(finder, timeout = 15000) {
+    async function waitFor(find, timeout = 20000) {
         const start = Date.now();
         while (Date.now() - start < timeout) {
-            const element = finder();
-            if (element) return element;
-            await sleep(400);
+            const el = find();
+            if (el) return el;
+            await sleep(350);
         }
         return null;
     }
 
-    function setInputValue(input, value) {
-        const text = String(value ?? "");
-        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
-        if (setter) setter.call(input, text); else input.value = text;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-        if (window.jQuery) window.jQuery(input).val(text).trigger("input").trigger("change");
-    }
-
-    function commitInput(input) {
-        if (window.jQuery) window.jQuery(input).trigger("change").trigger("blur");
-        else {
-            input.dispatchEvent(new Event("change", { bubbles: true }));
-            input.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
-            input.blur();
+    function status(text, error = false) {
+        console.log("[Eden Assistant]", text);
+        const el = document.getElementById("edenAssistantStatus");
+        if (el) {
+            el.textContent = text;
+            el.style.background = error ? "#b71c1c" : "#263238";
         }
     }
 
-    function triggerClick(element) {
-        if (!element) return;
-        if (window.jQuery) window.jQuery(element).trigger("click");
-        else if (typeof element.click === "function") element.click();
-        else element.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, composed: true, view: window }));
+    function setValue(el, value) {
+        const text = String(value ?? "");
+        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+        if (setter) setter.call(el, text); else el.value = text;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        if (window.jQuery) window.jQuery(el).val(text).trigger("input").trigger("change");
     }
 
-    function writePendingMarker() {
-        window.name = `${WINDOW_MARKER}${ACTIVE_WIP}`;
+    function commit(el) {
+        if (window.jQuery) window.jQuery(el).trigger("change").trigger("blur");
+        else {
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+            el.dispatchEvent(new FocusEvent("blur", { bubbles: true }));
+            el.blur();
+        }
     }
 
-    function readPendingMarker() {
-        const value = String(window.name || "");
-        return value.startsWith(WINDOW_MARKER) ? value.slice(WINDOW_MARKER.length) : "";
+    function click(el) {
+        if (!el) return;
+        if (window.jQuery) window.jQuery(el).trigger("click");
+        else el.click();
     }
 
-    function clearPendingMarker() {
-        if (String(window.name || "").startsWith(WINDOW_MARKER)) window.name = "";
-    }
-
-    function findEdenVueTile() {
-        return Array.from(document.querySelectorAll("a")).find(anchor => {
-            const text = String(anchor.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-            const href = String(anchor.getAttribute("href") || "").toLowerCase();
-            return text.includes("eden 1 vue") || href.includes("dealcrm_codeweavers/main.asp");
-        }) || null;
-    }
+    function writeMarker() { window.name = MARKER + ACTIVE_WIP; }
+    function readMarker() { return String(window.name || "").startsWith(MARKER) ? String(window.name).slice(MARKER.length) : ""; }
+    function clearMarker() { if (String(window.name || "").startsWith(MARKER)) window.name = ""; }
 
     async function openEdenVue() {
-        const tile = await waitForElement(() => {
-            const element = findEdenVueTile();
-            return element && isVisible(element) ? element : null;
-        }, 12000);
+        const tile = await waitFor(() => Array.from(document.querySelectorAll("a")).find(a => {
+            const text = String(a.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+            const href = String(a.getAttribute("href") || "").toLowerCase();
+            return visible(a) && (text.includes("eden 1 vue") || href.includes("dealcrm_codeweavers/main.asp"));
+        }), 12000);
         if (!tile) throw new Error("Eden 1 Vue tile not found");
-
-        writePendingMarker();
-        tile.setAttribute("target", "_self");
-        tile.scrollIntoView({ block: "center", inline: "center" });
-        setStatus(`Opening Eden 1 Vue • WIP ${ACTIVE_WIP}...`);
-        await sleep(200);
-        triggerClick(tile);
+        writeMarker();
+        tile.target = "_self";
+        tile.scrollIntoView({ block: "center" });
+        status(`Opening Eden 1 Vue • WIP ${ACTIVE_WIP}...`);
+        await sleep(250);
+        click(tile);
     }
 
-    async function openTab(tabId, paneId, href) {
-        const tab = await waitForElement(() => {
-            const element = document.getElementById(tabId) || document.querySelector(`a[href="${href}"]`);
-            return isVisible(element) ? element : null;
-        }, 20000);
+    async function openTab(id, paneId, href) {
+        const tab = await waitFor(() => {
+            const el = document.getElementById(id) || document.querySelector(`a[href="${href}"]`);
+            return visible(el) ? el : null;
+        });
         if (!tab) throw new Error(`${paneId} tab not found`);
         if (window.jQuery && typeof window.jQuery(tab).tab === "function") window.jQuery(tab).tab("show");
-        else triggerClick(tab);
-        const pane = await waitForElement(() => {
-            const element = document.getElementById(paneId);
-            return isVisible(element) ? element : null;
-        }, 10000);
+        else click(tab);
+        const pane = await waitFor(() => visible(document.getElementById(paneId)) ? document.getElementById(paneId) : null, 10000);
         if (!pane) throw new Error(`${paneId} did not open`);
         await sleep(600);
     }
 
-    async function setInspectionRow(row, colour, description = "") {
+    async function fillInspection() {
+        const rows = Array.from(document.querySelectorAll("#vhcinspection .servline_vhc[job]"));
+        if (!rows.length) throw new Error("Inspection rows not found");
         const selectors = {
             green: ".vhcbtn.btn-success, .vhcbtn[class*='_green']",
             amber: ".vhcbtn.btn-warning, .vhcbtn[class*='_amber']",
             red: ".vhcbtn.btn-danger, .vhcbtn[class*='_red']"
         };
-        const button = row.querySelector(selectors[colour]);
-        if (!button) return false;
-        triggerClick(button);
-        await sleep(350);
-        const input = row.querySelector("input.vhcjobdesc, input[id^='vhcjobdesc_']");
-        if (input) {
-            input.maxLength = MAX_WORK_DESCRIPTION_LENGTH;
-            input.focus();
-            setInputValue(input, String(description).slice(0, MAX_WORK_DESCRIPTION_LENGTH));
-            commitInput(input);
-            await sleep(350);
-        }
-        return true;
-    }
-
-    async function fillInspection(profile) {
-        const rows = Array.from(document.querySelectorAll("#vhcinspection .servline_vhc[job]"));
-        if (!rows.length) throw new Error("Inspection rows not found");
-        for (let i = 0; i < rows.length; i += 1) {
+        for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const item = String(row.getAttribute("job") || "").trim();
-            const colour = profile.colours?.[item] || profile.defaultColour;
-            setStatus(`Inspection ${i + 1}/${rows.length}: ${item}`);
-            await setInspectionRow(row, colour, profile.comments[item] || "");
+            const colour = PROFILE.inspection.colours[item] || PROFILE.inspection.defaultColour;
+            status(`Inspection ${i + 1}/${rows.length}: ${item}`);
+            click(row.querySelector(selectors[colour]));
+            await sleep(300);
+            const input = row.querySelector("input.vhcjobdesc, input[id^='vhcjobdesc_']");
+            if (input) {
+                input.maxLength = MAX_DESCRIPTION;
+                setValue(input, String(PROFILE.inspection.comments[item] || "").slice(0, MAX_DESCRIPTION));
+                commit(input);
+                await sleep(300);
+            }
         }
     }
 
-    function setTyreStatus(side, status) {
+    async function fillTyre(side, data) {
+        for (const field of ["outer", "mid", "inner", "make", "size", "notes"]) {
+            const el = document.getElementById(`x_${side}_${field}`);
+            if (!el) continue;
+            setValue(el, data[field]);
+            commit(el);
+            await sleep(450);
+        }
         const hidden = document.getElementById(`x_${side}_statusid`);
-        if (!hidden || !status) return;
-        setInputValue(hidden, status);
-        commitInput(hidden);
+        if (hidden) { setValue(hidden, data.status); commit(hidden); }
     }
 
-    async function setTyre(side, data) {
-        for (const name of ["outer", "mid", "inner", "make", "size", "notes"]) {
-            const element = document.getElementById(`x_${side}_${name}`);
-            if (!element || !(name in data)) continue;
-            element.focus();
-            setInputValue(element, data[name]);
-            await sleep(120);
-            commitInput(element);
-            await sleep(550);
-        }
-        setTyreStatus(side, data.status);
-    }
-
-    async function fillTyres(tyres) {
+    async function fillTyres() {
         await openTab("vhctab_tyres", "vhctyres", "#vhctyres");
         for (const side of ["fl", "fr", "rl", "rr"]) {
-            setStatus(`Tyres: ${side.toUpperCase()}`);
-            await setTyre(side, tyres[side]);
+            status(`Tyres: ${side.toUpperCase()}`);
+            await fillTyre(side, PROFILE.tyres[side]);
         }
     }
 
-    async function applyVehicleProfile(wip) {
-        const profile = VEHICLE_PROFILES[wip];
-        if (!profile) throw new Error(`No prepared profile for WIP ${wip}`);
-        await fillInspection(profile.inspection);
-        await fillTyres(profile.tyres);
-        clearPendingMarker();
-        setStatus(`WIP ${wip}: filled — CHECK BEFORE SAVE`);
-    }
-
-    async function runDealfileFlow(wip) {
-        setStatus(`Looking for WIP ${wip} field...`);
-        const input = await waitForElement(() => {
-            const element = document.getElementById("x_searchwip");
-            return isVisible(element) ? element : null;
+    async function runDealfile() {
+        const input = await waitFor(() => {
+            const el = document.getElementById("x_searchwip");
+            return visible(el) ? el : null;
         }, 30000);
         if (!input) throw new Error("WIP field not found");
-        input.focus();
-        setInputValue(input, wip);
+        setValue(input, ACTIVE_WIP);
         await sleep(500);
-
-        const search = await waitForElement(() => {
-            const element = document.getElementById("mainsearchbuts_serv");
-            return isVisible(element) ? element : null;
+        const search = await waitFor(() => {
+            const el = document.getElementById("mainsearchbuts_serv");
+            return visible(el) ? el : null;
         }, 12000);
         if (!search) throw new Error("Search control not found");
-
-        setStatus(`Searching WIP ${wip}...`);
-        triggerClick(search);
+        status(`Searching WIP ${ACTIVE_WIP}...`);
+        click(search);
         await openTab("vhctab_inpection", "vhcinspection", "#vhcinspection");
-        await applyVehicleProfile(wip);
+        await fillInspection();
+        await fillTyres();
+        clearMarker();
+        status(`WIP ${ACTIVE_WIP}: filled — CHECK BEFORE SAVE`);
     }
 
-    async function runAssistant() {
+    async function run() {
         const button = document.getElementById("edenAssistantButton");
         if (button) { button.disabled = true; button.textContent = "WORKING..."; }
         try {
-            if (location.hostname === "login.eden1vision.com") {
-                await openEdenVue();
-                return;
-            }
-            if (location.hostname === "eden.dealfile.co.uk") {
-                writePendingMarker();
-                await runDealfileFlow(ACTIVE_WIP);
-                return;
-            }
-            setStatus("Unsupported page", true);
-        } catch (error) {
-            console.error(error);
-            setStatus(`Error: ${error.message || error}`, true);
+            if (location.hostname === "login.eden1vision.com") await openEdenVue();
+            else if (location.hostname === "eden.dealfile.co.uk") { writeMarker(); await runDealfile(); }
+            else status("Unsupported page", true);
+        } catch (e) {
+            console.error(e);
+            status(`Error: ${e.message || e}`, true);
         } finally {
             if (button) { button.disabled = false; button.textContent = "START"; }
         }
     }
 
-    function createPanel() {
+    function panel() {
         if (document.getElementById("edenAssistantPanel") || !document.body) return;
-        const panel = document.createElement("div");
-        panel.id = "edenAssistantPanel";
-        Object.assign(panel.style, { position: "fixed", right: "10px", bottom: "85px", zIndex: "2147483647", display: "flex", flexDirection: "column", gap: "8px", width: "220px" });
-
-        const status = document.createElement("div");
-        status.id = "edenAssistantStatus";
-        status.textContent = `Eden Assistant v${VERSION}`;
-        Object.assign(status.style, { padding: "9px 12px", borderRadius: "9px", background: "#263238", color: "#fff", fontSize: "13px", textAlign: "center", boxShadow: "0 3px 10px rgba(0,0,0,.45)" });
-
-        const vehicleInfo = document.createElement("div");
-        vehicleInfo.textContent = `WIP ${ACTIVE_WIP} • ${ACTIVE_VEHICLE}`;
-        Object.assign(vehicleInfo.style, { boxSizing: "border-box", width: "100%", padding: "12px", border: "2px solid #1565c0", borderRadius: "10px", background: "#fff", color: "#111", fontSize: "17px", fontWeight: "bold", textAlign: "center", boxShadow: "0 3px 10px rgba(0,0,0,.35)" });
-
-        const button = document.createElement("button");
-        button.id = "edenAssistantButton";
-        button.textContent = "START";
-        Object.assign(button.style, { padding: "14px 17px", border: "2px solid white", borderRadius: "12px", background: "#1565c0", color: "#fff", fontSize: "16px", fontWeight: "bold", boxShadow: "0 3px 10px rgba(0,0,0,.45)" });
-        button.addEventListener("click", runAssistant);
-
-        panel.append(status, vehicleInfo, button);
-        document.body.appendChild(panel);
+        const box = document.createElement("div");
+        box.id = "edenAssistantPanel";
+        Object.assign(box.style, { position: "fixed", right: "10px", bottom: "85px", zIndex: "2147483647", display: "flex", flexDirection: "column", gap: "8px", width: "220px" });
+        const s = document.createElement("div");
+        s.id = "edenAssistantStatus";
+        s.textContent = `Eden Assistant v${VERSION}`;
+        Object.assign(s.style, { padding: "9px 12px", borderRadius: "9px", background: "#263238", color: "#fff", fontSize: "13px", textAlign: "center" });
+        const info = document.createElement("div");
+        info.textContent = `WIP ${ACTIVE_WIP} • ${ACTIVE_VEHICLE}`;
+        Object.assign(info.style, { padding: "12px", border: "2px solid #1565c0", borderRadius: "10px", background: "#fff", color: "#111", fontSize: "17px", fontWeight: "bold", textAlign: "center" });
+        const b = document.createElement("button");
+        b.id = "edenAssistantButton";
+        b.textContent = "START";
+        Object.assign(b.style, { padding: "14px 17px", border: "2px solid white", borderRadius: "12px", background: "#1565c0", color: "#fff", fontSize: "16px", fontWeight: "bold" });
+        b.addEventListener("click", run);
+        box.append(s, info, b);
+        document.body.appendChild(box);
     }
 
-    createPanel();
-    new MutationObserver(createPanel).observe(document.documentElement, { childList: true, subtree: true });
-
-    if (location.hostname === "eden.dealfile.co.uk") {
-        const pendingWip = readPendingMarker();
-        if (pendingWip === ACTIVE_WIP) {
-            setTimeout(() => runDealfileFlow(ACTIVE_WIP), 1800);
-        }
-    }
+    panel();
+    new MutationObserver(panel).observe(document.documentElement, { childList: true, subtree: true });
+    if (location.hostname === "eden.dealfile.co.uk" && readMarker() === ACTIVE_WIP) setTimeout(runDealfile, 1800);
 })();
