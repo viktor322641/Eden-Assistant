@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.30
+// @version      0.31
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,31 +14,28 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.30";
-    const ACTIVE_WIP = "31211";
-    const ACTIVE_VEHICLE = "DX67 RHA";
+    const VERSION = "0.31";
+    const ACTIVE_WIP = "30694";
+    const ACTIVE_VEHICLE = "WO21 DFC";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {
-                "Brake Discs/Drums - Front": "amber"
-            },
+            colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 8.0 mm; minimum 2.0 mm; approximately 67% remaining.",
-                "Brake Discs/Drums - Front": "Current 24.0 mm; heavy ridging/uneven wear. Replacement recommended.",
-                "Brake Pads/Shoes - Rear": "Current 9.0 mm; minimum 2.0 mm; approximately 88% remaining.",
-                "Brake Discs/Drums - Rear": "Current 9.5 mm; minimum 8.4 mm; approximately 69% remaining.",
-                "Misc": "Historic OSR ABS sensor fault. Checked live data - operating correctly."
+                "Brake Pads/Shoes - Front": "Current 7.0 mm; good condition.",
+                "Brake Discs/Drums - Front": "Current 21.0 mm; minimum 20.2 mm; good condition.",
+                "Brake Pads/Shoes - Rear": "Current 4.0 mm; good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.3 mm; minimum 9.2 mm; good condition."
             }
         },
         tyres: {
-            fl: { outer: 6, mid: 6, inner: 6, make: "HANKOOK", size: "215/70 R16 100H", notes: "", status: "Green" },
-            fr: { outer: 6, mid: 6, inner: 6, make: "HANKOOK", size: "215/70 R16 100H", notes: "", status: "Green" },
-            rl: { outer: 7, mid: 7, inner: 7, make: "HANKOOK", size: "215/70 R16 100H", notes: "", status: "Green" },
-            rr: { outer: 7, mid: 7, inner: 7, make: "HANKOOK", size: "215/70 R16 100H", notes: "Deep cut exposing cord. Tyre requires immediate replacement. MOT fail.", status: "Red" }
+            fl: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" },
+            fr: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" },
+            rl: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" },
+            rr: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" }
         }
     };
 
