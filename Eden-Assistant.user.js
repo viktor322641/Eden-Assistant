@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.31
+// @version      0.32
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,28 +14,39 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.31";
-    const ACTIVE_WIP = "30694";
-    const ACTIVE_VEHICLE = "WO21 DFC";
+    const VERSION = "0.32";
+    const ACTIVE_WIP = "31338";
+    const ACTIVE_VEHICLE = "RJ19 YJF";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {},
+            colours: {
+                "Transmission": "red",
+                "Engine General": "red",
+                "Battery": "red",
+                "12-volt Battery": "red",
+                "12V Battery": "red"
+            },
             comments: {
-                "Brake Pads/Shoes - Front": "Current 7.0 mm; good condition.",
-                "Brake Discs/Drums - Front": "Current 21.0 mm; minimum 20.2 mm; good condition.",
-                "Brake Pads/Shoes - Rear": "Current 4.0 mm; good condition.",
-                "Brake Discs/Drums - Rear": "Current 10.3 mm; minimum 9.2 mm; good condition."
+                "Brake Pads/Shoes - Front": "Current 8 mm; approx. 25% wear. Good condition.",
+                "Brake Discs/Drums - Front": "Current 17.2 mm; approx. 40% wear. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 7 mm; approx. 29% wear. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 9.8 mm; approx. 13% wear. Good condition.",
+                "Transmission": "TCM communication fault found. Further electrical diagnosis and fault tracing required.",
+                "Engine General": "Initial diagnosis completed; root cause not confirmed. Book additional diagnostic time.",
+                "Battery": "12V battery failed voltage drop/load test. Replacement recommended.",
+                "12-volt Battery": "12V battery failed voltage drop/load test. Replacement recommended.",
+                "12V Battery": "12V battery failed voltage drop/load test. Replacement recommended."
             }
         },
         tyres: {
-            fl: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" },
-            fr: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" },
-            rl: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" },
-            rr: { outer: 7, mid: 7, inner: 7, make: "GOODYEAR", size: "205/40 R17", notes: "", status: "Green" }
+            fl: { outer: 8, mid: 8, inner: 8, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" },
+            fr: { outer: 8, mid: 8, inner: 8, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" }
         }
     };
 
