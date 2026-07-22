@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.32
+// @version      0.33
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.32";
-    const ACTIVE_WIP = "31338";
-    const ACTIVE_VEHICLE = "RJ19 YJF";
+    const VERSION = "0.33";
+    const ACTIVE_WIP = "32390";
+    const ACTIVE_VEHICLE = "HN13 SXW";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -25,28 +25,22 @@
             defaultColour: "green",
             colours: {
                 "Transmission": "red",
-                "Engine General": "red",
-                "Battery": "red",
-                "12-volt Battery": "red",
-                "12V Battery": "red"
+                "Brake Fluid": "amber"
             },
             comments: {
-                "Brake Pads/Shoes - Front": "Current 8 mm; approx. 25% wear. Good condition.",
-                "Brake Discs/Drums - Front": "Current 17.2 mm; approx. 40% wear. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 7 mm; approx. 29% wear. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 9.8 mm; approx. 13% wear. Good condition.",
-                "Transmission": "TCM communication fault found. Further electrical diagnosis and fault tracing required.",
-                "Engine General": "Initial diagnosis completed; root cause not confirmed. Book additional diagnostic time.",
-                "Battery": "12V battery failed voltage drop/load test. Replacement recommended.",
-                "12-volt Battery": "12V battery failed voltage drop/load test. Replacement recommended.",
-                "12V Battery": "12V battery failed voltage drop/load test. Replacement recommended."
+                "Brake Fluid": "Brake fluid is in poor condition. Brake fluid change recommended.",
+                "Brake Pads/Shoes - Front": "Current 6 mm; approx. 56% wear. Good condition.",
+                "Brake Discs/Drums - Front": "Current 27.2 mm; minimum 26.4 mm; approx. 50% wear.",
+                "Brake Pads/Shoes - Rear": "Current 10 mm; new, 0% wear. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.0 mm; new, 0% wear. Good condition.",
+                "Transmission": "Oil leak from transfer case/front driveshaft area. Remove driveshaft for diagnosis."
             }
         },
         tyres: {
-            fl: { outer: 8, mid: 8, inner: 8, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" },
-            fr: { outer: 8, mid: 8, inner: 8, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" },
-            rr: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "185/55 R15 82V", notes: "", status: "Green" }
+            fl: { outer: 5, mid: 5, inner: 5, make: "MAZZINI", size: "225/55 R18", notes: "", status: "Green" },
+            fr: { outer: 5, mid: 5, inner: 5, make: "MAZZINI", size: "225/55 R18", notes: "", status: "Green" },
+            rl: { outer: 5, mid: 5, inner: 5, make: "HANKOOK", size: "225/55 R18", notes: "", status: "Green" },
+            rr: { outer: 4, mid: 4, inner: 4, make: "HANKOOK", size: "225/55 R18", notes: "Deep sidewall cut exposing cord. Replace immediately. MOT fail.", status: "Red" }
         }
     };
 
