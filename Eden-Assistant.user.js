@@ -1,24 +1,31 @@
 // ==UserScript==
 // @name Eden Assistant
 // @namespace eden-assistant
-// @version 0.34
+// @version 0.35
 // @match https://login.eden1vision.com/*
 // @match https://eden.dealfile.co.uk/*
 // @grant none
 // @run-at document-idle
 // ==/UserScript==
 (function(){'use strict';
-const VERSION='0.34',ACTIVE_WIP='31825',ACTIVE_VEHICLE='GM23 OAY',MAX_DESCRIPTION=96,MARKER='EDEN_ASSISTANT_PENDING:';
-const PROFILE={inspection:{defaultColour:'green',colours:{},comments:{
-'Brake Pads/Shoes - Front':'Current 11 mm; approx. 5% wear. Excellent condition.',
-'Brake Discs/Drums - Front':'Current 25.1/25.2 mm; minimum 23.0 mm; approx. 0% wear.',
-'Brake Pads/Shoes - Rear':'Current 9 mm; approx. 13% wear. Excellent condition.',
-'Brake Discs/Drums - Rear':'Current 10.0 mm; minimum 8.4 mm; approx. 0% wear.'}},
+const VERSION='0.35',ACTIVE_WIP='32668',ACTIVE_VEHICLE='RK73VTL',MAX_DESCRIPTION=96,MARKER='EDEN_ASSISTANT_PENDING:';
+const PROFILE={inspection:{defaultColour:'green',colours:{'Tyre Pressure':'amber','Tyre Pressures':'amber','TPMS':'amber','Tyre Pressure Monitoring':'amber'},comments:{
+'Brake Pads/Shoes - Front':'Current 10 mm; approx. 11% wear. Good condition.',
+'Brake Discs/Drums - Front':'Current 25.0 mm; minimum 23.0 mm; approx. 0% wear.',
+'Brake Pads/Shoes - Rear':'Current 8 mm; approx. 25% wear. Good condition.',
+'Brake Discs/Drums - Rear':'Current 10.0 mm; minimum 8.0 mm; approx. 0% wear.',
+'Washers':'Washer pump blocked. System stripped, pump cleaned and refitted. Working correctly.',
+'Windscreen Washers':'Washer pump blocked. System stripped, pump cleaned and refitted. Working correctly.',
+'Washer System':'Washer pump blocked. System stripped, pump cleaned and refitted. Working correctly.',
+'Tyre Pressure':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.',
+'Tyre Pressures':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.',
+'TPMS':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.',
+'Tyre Pressure Monitoring':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.'}},
 tyres:{
-fl:{outer:3,mid:3,inner:3,make:'MICHELIN',size:'215/55 R17 94V',notes:'3 mm tread. Monitor wear / keep an eye on this tyre.',status:'Amber'},
-fr:{outer:4,mid:4,inner:4,make:'MICHELIN',size:'215/55 R17 94V',notes:'',status:'Green'},
-rl:{outer:5,mid:5,inner:5,make:'MICHELIN',size:'215/55 R17 94V',notes:'',status:'Green'},
-rr:{outer:5,mid:5,inner:5,make:'MICHELIN',size:'215/55 R17 94V',notes:'',status:'Green'}}};
+fl:{outer:5,mid:5,inner:5,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'},
+fr:{outer:6,mid:6,inner:6,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'},
+rl:{outer:5,mid:5,inner:5,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'},
+rr:{outer:5,mid:5,inner:5,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'}}};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function visible(el){if(!el)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0}
 async function waitFor(find,timeout=20000){const st=Date.now();while(Date.now()-st<timeout){const el=find();if(el)return el;await sleep(350)}return null}
