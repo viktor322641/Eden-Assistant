@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33
+// @version      0.33.1
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33";
-    const ACTIVE_WIP = "32390";
-    const ACTIVE_VEHICLE = "HN13 SXW";
+    const VERSION = "0.33.1";
+    const ACTIVE_WIP = "30613";
+    const ACTIVE_VEHICLE = "RF14 ULS";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -24,23 +24,30 @@
         inspection: {
             defaultColour: "green",
             colours: {
-                "Transmission": "red",
-                "Brake Fluid": "amber"
+                "Engine General": "red",
+                "Engine": "red",
+                "ABS": "red",
+                "ABS / ESP": "red",
+                "Stability Control": "red",
+                "Brake Pads/Shoes - Front": "amber"
             },
             comments: {
-                "Brake Fluid": "Brake fluid is in poor condition. Brake fluid change recommended.",
-                "Brake Pads/Shoes - Front": "Current 6 mm; approx. 56% wear. Good condition.",
-                "Brake Discs/Drums - Front": "Current 27.2 mm; minimum 26.4 mm; approx. 50% wear.",
-                "Brake Pads/Shoes - Rear": "Current 10 mm; new, 0% wear. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 10.0 mm; new, 0% wear. Good condition.",
-                "Transmission": "Oil leak from transfer case/front driveshaft area. Remove driveshaft for diagnosis."
+                "Engine General": "Engine oil critically low; dipstick dry. EML illuminated. Immediate attention required.",
+                "Engine": "Engine oil critically low; dipstick dry. EML illuminated. Immediate attention required.",
+                "ABS": "ABS and stability control warning lights illuminated. Diagnostic investigation required.",
+                "ABS / ESP": "ABS and stability control warning lights illuminated. Diagnostic investigation required.",
+                "Stability Control": "ABS and stability control warning lights illuminated. Diagnostic investigation required.",
+                "Brake Pads/Shoes - Front": "Current 4 mm; approx. 75% wear. Replacement recommended soon.",
+                "Brake Discs/Drums - Front": "Current 16.9 mm; minimum 16.0 mm; approx. 55% wear.",
+                "Brake Pads/Shoes - Rear": "Current 7 mm; approx. 29% wear. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.0 mm; minimum 8.4 mm; approx. 0% wear."
             }
         },
         tyres: {
-            fl: { outer: 5, mid: 5, inner: 5, make: "MAZZINI", size: "225/55 R18", notes: "", status: "Green" },
-            fr: { outer: 5, mid: 5, inner: 5, make: "MAZZINI", size: "225/55 R18", notes: "", status: "Green" },
-            rl: { outer: 5, mid: 5, inner: 5, make: "HANKOOK", size: "225/55 R18", notes: "", status: "Green" },
-            rr: { outer: 4, mid: 4, inner: 4, make: "HANKOOK", size: "225/55 R18", notes: "Deep sidewall cut exposing cord. Replace immediately. MOT fail.", status: "Red" }
+            fl: { outer: "", mid: "", inner: "", make: "KUTOGREEN", size: "175/65 R14 82T", notes: "Severe inner-edge wear. Replacement recommended; MOT advisory.", status: "Amber" },
+            fr: { outer: "", mid: "", inner: "", make: "KUTOGREEN", size: "175/65 R14 82T", notes: "Severe inner-edge wear with cords exposed. Replace immediately. MOT dangerous fail.", status: "Red" },
+            rl: { outer: 4.5, mid: 4.5, inner: 4.5, make: "KUTOGREEN", size: "175/65 R14 82T", notes: "", status: "Green" },
+            rr: { outer: 4.5, mid: 4.5, inner: 4.5, make: "KUTOGREEN", size: "175/65 R14 82T", notes: "", status: "Green" }
         }
     };
 
