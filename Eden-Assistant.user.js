@@ -1,31 +1,27 @@
 // ==UserScript==
 // @name Eden Assistant
 // @namespace eden-assistant
-// @version 0.35
+// @version 0.36
 // @match https://login.eden1vision.com/*
 // @match https://eden.dealfile.co.uk/*
 // @grant none
 // @run-at document-idle
 // ==/UserScript==
 (function(){'use strict';
-const VERSION='0.35',ACTIVE_WIP='32668',ACTIVE_VEHICLE='RK73VTL',MAX_DESCRIPTION=96,MARKER='EDEN_ASSISTANT_PENDING:';
-const PROFILE={inspection:{defaultColour:'green',colours:{'Tyre Pressure':'amber','Tyre Pressures':'amber','TPMS':'amber','Tyre Pressure Monitoring':'amber'},comments:{
-'Brake Pads/Shoes - Front':'Current 10 mm; approx. 11% wear. Good condition.',
-'Brake Discs/Drums - Front':'Current 25.0 mm; minimum 23.0 mm; approx. 0% wear.',
-'Brake Pads/Shoes - Rear':'Current 8 mm; approx. 25% wear. Good condition.',
-'Brake Discs/Drums - Rear':'Current 10.0 mm; minimum 8.0 mm; approx. 0% wear.',
-'Washers':'Washer pump blocked. System stripped, pump cleaned and refitted. Working correctly.',
-'Windscreen Washers':'Washer pump blocked. System stripped, pump cleaned and refitted. Working correctly.',
-'Washer System':'Washer pump blocked. System stripped, pump cleaned and refitted. Working correctly.',
-'Tyre Pressure':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.',
-'Tyre Pressures':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.',
-'TPMS':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.',
-'Tyre Pressure Monitoring':'TPMS warning illuminated. Check all tyre pressures and identify affected wheel.'}},
+const VERSION='0.36',ACTIVE_WIP='31159',ACTIVE_VEHICLE='RO71 GYK',MAX_DESCRIPTION=96,MARKER='EDEN_ASSISTANT_PENDING:';
+const PROFILE={inspection:{defaultColour:'green',colours:{
+'Brake Pads/Shoes - Front':'amber',
+'Brake Discs/Drums - Front':'red'
+},comments:{
+'Brake Pads/Shoes - Front':'Current 3 mm; approx. 86% wear. Replacement recommended.',
+'Brake Discs/Drums - Front':'Current 16.0 mm; minimum 16.0 mm; at limit. Replacement required.',
+'Brake Pads/Shoes - Rear':'Rear drums/shoes checked and OK. No action required.',
+'Brake Discs/Drums - Rear':'Rear drums checked and OK. No action required.'}},
 tyres:{
-fl:{outer:5,mid:5,inner:5,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'},
-fr:{outer:6,mid:6,inner:6,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'},
-rl:{outer:5,mid:5,inner:5,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'},
-rr:{outer:5,mid:5,inner:5,make:'KUMHO',size:'215/55 R18',notes:'',status:'Green'}}};
+fl:{outer:6,mid:6,inner:6,make:'KUMHO',size:'185/55 R15',notes:'',status:'Green'},
+fr:{outer:3,mid:3,inner:3,make:'KUMHO',size:'185/55 R15',notes:'Severe inner-edge wear and cut exposing cord. Replace immediately. MOT fail.',status:'Red'},
+rl:{outer:5,mid:5,inner:5,make:'KUMHO',size:'185/55 R15',notes:'',status:'Green'},
+rr:{outer:5,mid:5,inner:5,make:'KUMHO',size:'185/55 R15',notes:'',status:'Green'}}};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function visible(el){if(!el)return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&r.width>0&&r.height>0}
 async function waitFor(find,timeout=20000){const st=Date.now();while(Date.now()-st<timeout){const el=find();if(el)return el;await sleep(350)}return null}
