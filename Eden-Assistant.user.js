@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.4
+// @version      0.33.5
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,28 +14,31 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.4";
-    const ACTIVE_WIP = "32405";
-    const ACTIVE_VEHICLE = "NK23 OLE";
+    const VERSION = "0.33.5";
+    const ACTIVE_WIP = "32481";
+    const ACTIVE_VEHICLE = "EG18 PHY";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {},
+            colours: {
+                "Brake Pads/Shoes - Rear": "amber"
+            },
             comments: {
-                "Brake Pads/Shoes - Front": "Current 10.0 mm; new, 0% wear. Good condition.",
-                "Brake Discs/Drums - Front": "Current 25.0 mm; new, 0% wear. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 8.0 mm; new, 0% wear. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 10.0 mm; new, 0% wear. Good condition."
+                "Brake Pads/Shoes - Front": "Current 7 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 22.4 mm; minimum 21.0 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 4 mm; replacement recommended soon.",
+                "Brake Discs/Drums - Rear": "Current 11.3 mm; minimum 9.0 mm. Good condition.",
+                "Timing Belt": "Timing belt interval 144,000 miles/120 months; not due at present."
             }
         },
         tyres: {
-            fl: { outer: 4, mid: 4, inner: 4, make: "TOYO", size: "255/55 R19 99V", notes: "", status: "Green" },
-            fr: { outer: 5, mid: 5, inner: 5, make: "TOYO", size: "255/55 R19 99V", notes: "", status: "Green" },
-            rl: { outer: 7, mid: 7, inner: 7, make: "CONTINENTAL", size: "225/55 R19 Y XL", notes: "", status: "Green" },
-            rr: { outer: 7, mid: 7, inner: 7, make: "CONTINENTAL", size: "225/55 R19 Y XL", notes: "", status: "Green" }
+            fl: { outer: 4, mid: 4, inner: 4, make: "FALKEN", size: "205/40 R18 86W", notes: "", status: "Green" },
+            fr: { outer: 4, mid: 4, inner: 4, make: "FALKEN", size: "205/40 R18 86W", notes: "", status: "Green" },
+            rl: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "205/40 ZR18", notes: "3 mm tread. Monitor wear; replacement recommended soon.", status: "Amber" },
+            rr: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "205/40 ZR18", notes: "3 mm tread. Monitor wear; replacement recommended soon.", status: "Amber" }
         }
     };
 
