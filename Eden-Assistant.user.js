@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.2
+// @version      0.33.3
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.2";
-    const ACTIVE_WIP = "31205";
-    const ACTIVE_VEHICLE = "RF23 GJE";
+    const VERSION = "0.33.3";
+    const ACTIVE_WIP = "31615";
+    const ACTIVE_VEHICLE = "RF23 VHE";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -26,16 +26,16 @@
             colours: {},
             comments: {
                 "Brake Pads/Shoes - Front": "Current 12 mm; approx. 0% wear. Excellent condition.",
-                "Brake Discs/Drums - Front": "Current 29.8/29.9 mm; minimum 28.0 mm; approx. 5-10% wear.",
+                "Brake Discs/Drums - Front": "Current 29.0 mm; minimum 28.0 mm; approx. 50% wear.",
                 "Brake Pads/Shoes - Rear": "Current 9 mm; approx. 13% wear. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 9.8 mm; minimum 8.0 mm; approx. 10% wear."
+                "Brake Discs/Drums - Rear": "Current 9.9 mm; minimum 8.0 mm; approx. 5% wear."
             }
         },
         tyres: {
-            fl: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19 103V", notes: "", status: "Green" },
-            fr: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "235/50 R19 103V", notes: "", status: "Green" },
-            rl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19 103V", notes: "", status: "Green" },
-            rr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19 103V", notes: "", status: "Green" }
+            fl: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "235/50 R19", notes: "3 mm tread. Close to legal limit; monitor and replacement recommended soon.", status: "Amber" },
+            fr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" }
         }
     };
 
