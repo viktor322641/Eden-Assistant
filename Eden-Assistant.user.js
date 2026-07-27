@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.3
+// @version      0.33.4
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.3";
-    const ACTIVE_WIP = "31615";
-    const ACTIVE_VEHICLE = "RF23 VHE";
+    const VERSION = "0.33.4";
+    const ACTIVE_WIP = "32405";
+    const ACTIVE_VEHICLE = "NK23 OLE";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -25,17 +25,17 @@
             defaultColour: "green",
             colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 12 mm; approx. 0% wear. Excellent condition.",
-                "Brake Discs/Drums - Front": "Current 29.0 mm; minimum 28.0 mm; approx. 50% wear.",
-                "Brake Pads/Shoes - Rear": "Current 9 mm; approx. 13% wear. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 9.9 mm; minimum 8.0 mm; approx. 5% wear."
+                "Brake Pads/Shoes - Front": "Current 10.0 mm; new, 0% wear. Good condition.",
+                "Brake Discs/Drums - Front": "Current 25.0 mm; new, 0% wear. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 8.0 mm; new, 0% wear. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.0 mm; new, 0% wear. Good condition."
             }
         },
         tyres: {
-            fl: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "235/50 R19", notes: "3 mm tread. Close to legal limit; monitor and replacement recommended soon.", status: "Amber" },
-            fr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" },
-            rr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "235/50 R19", notes: "", status: "Green" }
+            fl: { outer: 4, mid: 4, inner: 4, make: "TOYO", size: "255/55 R19 99V", notes: "", status: "Green" },
+            fr: { outer: 5, mid: 5, inner: 5, make: "TOYO", size: "255/55 R19 99V", notes: "", status: "Green" },
+            rl: { outer: 7, mid: 7, inner: 7, make: "CONTINENTAL", size: "225/55 R19 Y XL", notes: "", status: "Green" },
+            rr: { outer: 7, mid: 7, inner: 7, make: "CONTINENTAL", size: "225/55 R19 Y XL", notes: "", status: "Green" }
         }
     };
 
