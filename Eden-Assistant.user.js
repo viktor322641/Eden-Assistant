@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.8
+// @version      0.33.9
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,28 +14,33 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.8";
-    const ACTIVE_WIP = "33119";
-    const ACTIVE_VEHICLE = "AO22 CWW";
+    const VERSION = "0.33.9";
+    const ACTIVE_WIP = "32168";
+    const ACTIVE_VEHICLE = "BF71 OPH";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {},
+            colours: {
+                "Timing Belt": "red",
+                "Engine": "amber"
+            },
             comments: {
-                "Brake Pads/Shoes - Front": "Current 7 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 28.0 mm. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 6 mm. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 9.2 mm. Good condition."
+                "Brake Pads/Shoes - Front": "Current 8 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 25.3 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 10 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 9.8 mm. Good condition.",
+                "Timing Belt": "Wet timing belt heavily cracked. Immediate replacement recommended to prevent failure.",
+                "Engine": "Oil leak from sump drain plug area. Washer replaced; leak/threads require further investigation."
             }
         },
         tyres: {
-            fl: { outer: 3.5, mid: 3.5, inner: 3.5, make: "MICHELIN", size: "215/65 R17", notes: "", status: "Green" },
-            fr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/65 R17", notes: "", status: "Green" },
-            rl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/65 R17", notes: "", status: "Green" },
-            rr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/65 R17", notes: "", status: "Green" }
+            fl: { outer: 6, mid: 6, inner: 6, make: "WINDFORCE", size: "215/50 R17 95W", notes: "", status: "Green" },
+            fr: { outer: 6, mid: 6, inner: 6, make: "WINDFORCE", size: "215/50 R17 95W", notes: "", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "AVON", size: "215/50 R17", notes: "", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "AVON", size: "215/50 R17", notes: "", status: "Green" }
         }
     };
 
