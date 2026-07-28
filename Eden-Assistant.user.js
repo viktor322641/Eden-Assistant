@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.5
+// @version      0.33.6
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,31 +14,23 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.5";
-    const ACTIVE_WIP = "32481";
-    const ACTIVE_VEHICLE = "EG18 PHY";
+    const VERSION = "0.33.6";
+    const ACTIVE_WIP = "30400";
+    const ACTIVE_VEHICLE = "RK22 UMZ";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {
-                "Brake Pads/Shoes - Rear": "amber"
-            },
-            comments: {
-                "Brake Pads/Shoes - Front": "Current 7 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 22.4 mm; minimum 21.0 mm. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 4 mm; replacement recommended soon.",
-                "Brake Discs/Drums - Rear": "Current 11.3 mm; minimum 9.0 mm. Good condition.",
-                "Timing Belt": "Timing belt interval 144,000 miles/120 months; not due at present."
-            }
+            colours: {},
+            comments: {}
         },
         tyres: {
-            fl: { outer: 4, mid: 4, inner: 4, make: "FALKEN", size: "205/40 R18 86W", notes: "", status: "Green" },
-            fr: { outer: 4, mid: 4, inner: 4, make: "FALKEN", size: "205/40 R18 86W", notes: "", status: "Green" },
-            rl: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "205/40 ZR18", notes: "3 mm tread. Monitor wear; replacement recommended soon.", status: "Amber" },
-            rr: { outer: 3, mid: 3, inner: 3, make: "MICHELIN", size: "205/40 ZR18", notes: "3 mm tread. Monitor wear; replacement recommended soon.", status: "Amber" }
+            fl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" },
+            fr: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" },
+            rl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" },
+            rr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" }
         }
     };
 
