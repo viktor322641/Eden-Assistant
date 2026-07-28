@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.6
+// @version      0.33.7
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.6";
-    const ACTIVE_WIP = "30400";
-    const ACTIVE_VEHICLE = "RK22 UMZ";
+    const VERSION = "0.33.7";
+    const ACTIVE_WIP = "32064";
+    const ACTIVE_VEHICLE = "RJ20 EFW";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -24,13 +24,18 @@
         inspection: {
             defaultColour: "green",
             colours: {},
-            comments: {}
+            comments: {
+                "Brake Pads/Shoes - Front": "Current 9 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 24.0 mm; minimum 23.4 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 10 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 9.4 mm; minimum 8.4 mm. Good condition."
+            }
         },
         tyres: {
-            fl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" },
-            fr: { outer: 4, mid: 4, inner: 4, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" },
-            rl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" },
-            rr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" }
+            fl: { outer: 3.5, mid: 3.5, inner: 3.5, make: "HANKOOK", size: "225/60 R17 99H", notes: "", status: "Green" },
+            fr: { outer: 4, mid: 4, inner: 4, make: "HANKOOK", size: "225/60 R17 99H", notes: "", status: "Green" },
+            rl: { outer: 2.5, mid: 2.5, inner: 2.5, make: "HANKOOK", size: "225/60 R17 99H", notes: "2.5 mm tread with cracking between tread grooves. No cords exposed. Replacement recommended.", status: "Amber" },
+            rr: { outer: 2.5, mid: 2.5, inner: 2.5, make: "HANKOOK", size: "225/60 R17 99H", notes: "2.5 mm tread with cracking between tread grooves. No cords exposed. Replacement recommended.", status: "Amber" }
         }
     };
 
