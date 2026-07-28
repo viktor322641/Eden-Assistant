@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.9
+// @version      0.33.10
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,7 +14,7 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.9";
+    const VERSION = "0.33.10";
     const ACTIVE_WIP = "32168";
     const ACTIVE_VEHICLE = "BF71 OPH";
     const MAX_DESCRIPTION = 96;
@@ -24,16 +24,14 @@
         inspection: {
             defaultColour: "green",
             colours: {
-                "Timing Belt": "red",
-                "Engine": "amber"
+                "Engine": "red"
             },
             comments: {
                 "Brake Pads/Shoes - Front": "Current 8 mm. Good condition.",
                 "Brake Discs/Drums - Front": "Current 25.3 mm. Good condition.",
                 "Brake Pads/Shoes - Rear": "Current 10 mm. Good condition.",
                 "Brake Discs/Drums - Rear": "Current 9.8 mm. Good condition.",
-                "Timing Belt": "Wet timing belt heavily cracked. Immediate replacement recommended to prevent failure.",
-                "Engine": "Oil leak from sump drain plug area. Washer replaced; leak/threads require further investigation."
+                "Engine": "Oil leak at sump drain plug. Wet timing belt heavily cracked; immediate replacement required."
             }
         },
         tyres: {
