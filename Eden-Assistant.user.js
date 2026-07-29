@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.14
+// @version      0.33.15
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.14";
-    const ACTIVE_WIP = "32530";
-    const ACTIVE_VEHICLE = "RO72 NFZ";
+    const VERSION = "0.33.15";
+    const ACTIVE_WIP = "32315";
+    const ACTIVE_VEHICLE = "BC25 NJF";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -25,17 +25,17 @@
             defaultColour: "green",
             colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 9 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 21.2 mm. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 6 mm. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 8.6 mm. Good condition."
+                "Brake Pads/Shoes - Front": "Current 12 mm. Excellent condition.",
+                "Brake Discs/Drums - Front": "Current 29.9 mm. Excellent condition.",
+                "Brake Pads/Shoes - Rear": "Current 9 mm. Excellent condition.",
+                "Brake Discs/Drums - Rear": "Current 20 mm. Excellent condition."
             }
         },
         tyres: {
-            fl: { outer: 7, mid: 7, inner: 7, make: "DUNLOP", size: "205/45 R17 88W", notes: "", status: "Green" },
-            fr: { outer: 7, mid: 7, inner: 7, make: "DUNLOP", size: "205/45 R17 88W", notes: "", status: "Green" },
-            rl: { outer: 7, mid: 7, inner: 7, make: "DUNLOP", size: "205/45 R17 88W", notes: "", status: "Green" },
-            rr: { outer: 7, mid: 7, inner: 7, make: "DUNLOP", size: "205/45 R17 88W", notes: "", status: "Green" }
+            fl: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" },
+            fr: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" }
         }
     };
 
