@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.12
+// @version      0.33.13
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.12";
-    const ACTIVE_WIP = "31923";
-    const ACTIVE_VEHICLE = "RA24 FFU";
+    const VERSION = "0.33.13";
+    const ACTIVE_WIP = "31891";
+    const ACTIVE_VEHICLE = "SK21 XVU";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -26,16 +26,16 @@
             colours: {},
             comments: {
                 "Brake Pads/Shoes - Front": "Current 11 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 22.0 mm. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 10 mm. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 11.5 mm. Good condition."
+                "Brake Discs/Drums - Front": "Current 25.0 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 8 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 9.9 mm. Good condition."
             }
         },
         tyres: {
-            fl: { outer: "", mid: "", inner: "", make: "BRIDGESTONE", size: "195/55 R16 87V", notes: "", status: "Green" },
-            fr: { outer: "", mid: "", inner: "", make: "BRIDGESTONE", size: "195/55 R16 87V", notes: "", status: "Green" },
-            rl: { outer: "", mid: "", inner: "", make: "BRIDGESTONE", size: "195/55 R16 87V", notes: "", status: "Green" },
-            rr: { outer: "", mid: "", inner: "", make: "BRIDGESTONE", size: "195/55 R16 87V", notes: "", status: "Green" }
+            fl: { outer: 4, mid: 4, inner: 4, make: "NEXEN", size: "215/55 R17 94V", notes: "", status: "Green" },
+            fr: { outer: 4, mid: 4, inner: 4, make: "NEXEN", size: "215/55 R17 94V", notes: "", status: "Green" },
+            rl: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" },
+            rr: { outer: 5, mid: 5, inner: 5, make: "MICHELIN", size: "215/55 R17 94V", notes: "", status: "Green" }
         }
     };
 
