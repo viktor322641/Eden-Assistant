@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.16
+// @version      0.33.17
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,28 +14,33 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.16";
-    const ACTIVE_WIP = "31893";
-    const ACTIVE_VEHICLE = "LL65 UTY";
+    const VERSION = "0.33.17";
+    const ACTIVE_WIP = "32040";
+    const ACTIVE_VEHICLE = "DV72 YSR";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {},
+            colours: {
+                "Brake Pads/Shoes - Front": "amber",
+                "Brake Discs/Drums - Front": "amber",
+                "Brake Pads/Shoes - Rear": "red",
+                "Brake Discs/Drums - Rear": "red"
+            },
             comments: {
-                "Brake Pads/Shoes - Front": "Current 9 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 21.0 mm. Good condition.",
-                "Brake Pads/Shoes - Rear": "Rear drum brakes checked. Good condition.",
-                "Brake Discs/Drums - Rear": "Rear drums checked. Good condition."
+                "Brake Pads/Shoes - Front": "Current 5 mm. Monitor wear.",
+                "Brake Discs/Drums - Front": "Current 23.6 mm, approx. 70% worn. Monitor condition.",
+                "Brake Pads/Shoes - Rear": "Current 2 mm, at minimum limit. Replace immediately.",
+                "Brake Discs/Drums - Rear": "Current 8.7 mm and heavily corroded. Replace with rear pads."
             }
         },
         tyres: {
-            fl: { outer: 2.5, mid: 2.5, inner: 2.5, make: "YOKOHAMA", size: "185/65 R15 88T", notes: "Low tread. Replacement recommended soon.", status: "Amber" },
-            fr: { outer: 3, mid: 3, inner: 3, make: "YOKOHAMA", size: "185/65 R15 88T", notes: "Low tread. Replacement recommended soon.", status: "Amber" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "HANKOOK", size: "185/65 R15", notes: "Good condition.", status: "Green" },
-            rr: { outer: 4, mid: 4, inner: 4, make: "YOKOHAMA", size: "185/65 R15 88T", notes: "Good condition.", status: "Green" }
+            fl: { outer: 6, mid: 6, inner: 6, make: "YOKOHAMA", size: "215/45 R18 93W", notes: "Excellent condition.", status: "Green" },
+            fr: { outer: 6, mid: 6, inner: 6, make: "YOKOHAMA", size: "215/45 R18 93W", notes: "Excellent condition.", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "BRIDGESTONE", size: "215/45 R18 89W", notes: "Excellent condition.", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "BRIDGESTONE", size: "215/45 R18 89W", notes: "Excellent condition.", status: "Green" }
         }
     };
 
