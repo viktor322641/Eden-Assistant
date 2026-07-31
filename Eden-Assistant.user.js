@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.15
+// @version      0.33.16
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.15";
-    const ACTIVE_WIP = "32315";
-    const ACTIVE_VEHICLE = "BC25 NJF";
+    const VERSION = "0.33.16";
+    const ACTIVE_WIP = "31893";
+    const ACTIVE_VEHICLE = "LL65 UTY";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -25,17 +25,17 @@
             defaultColour: "green",
             colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 12 mm. Excellent condition.",
-                "Brake Discs/Drums - Front": "Current 29.9 mm. Excellent condition.",
-                "Brake Pads/Shoes - Rear": "Current 9 mm. Excellent condition.",
-                "Brake Discs/Drums - Rear": "Current 20 mm. Excellent condition."
+                "Brake Pads/Shoes - Front": "Current 9 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 21.0 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Rear drum brakes checked. Good condition.",
+                "Brake Discs/Drums - Rear": "Rear drums checked. Good condition."
             }
         },
         tyres: {
-            fl: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" },
-            fr: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" },
-            rr: { outer: 6, mid: 6, inner: 6, make: "PIRELLI", size: "245/40 R20 99Y", notes: "Excellent condition.", status: "Green" }
+            fl: { outer: 2.5, mid: 2.5, inner: 2.5, make: "YOKOHAMA", size: "185/65 R15 88T", notes: "Low tread. Replacement recommended soon.", status: "Amber" },
+            fr: { outer: 3, mid: 3, inner: 3, make: "YOKOHAMA", size: "185/65 R15 88T", notes: "Low tread. Replacement recommended soon.", status: "Amber" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "HANKOOK", size: "185/65 R15", notes: "Good condition.", status: "Green" },
+            rr: { outer: 4, mid: 4, inner: 4, make: "YOKOHAMA", size: "185/65 R15 88T", notes: "Good condition.", status: "Green" }
         }
     };
 
