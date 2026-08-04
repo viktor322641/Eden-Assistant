@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.17
+// @version      0.33.18
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,33 +14,30 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.17";
-    const ACTIVE_WIP = "32040";
-    const ACTIVE_VEHICLE = "DV72 YSR";
+    const VERSION = "0.33.18";
+    const ACTIVE_WIP = "32412";
+    const ACTIVE_VEHICLE = "527PKK";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {
-                "Brake Pads/Shoes - Front": "amber",
-                "Brake Discs/Drums - Front": "amber",
-                "Brake Pads/Shoes - Rear": "red",
-                "Brake Discs/Drums - Rear": "red"
-            },
+            colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 5 mm. Monitor wear.",
-                "Brake Discs/Drums - Front": "Current 23.6 mm, approx. 70% worn. Monitor condition.",
-                "Brake Pads/Shoes - Rear": "Current 2 mm, at minimum limit. Replace immediately.",
-                "Brake Discs/Drums - Rear": "Current 8.7 mm and heavily corroded. Replace with rear pads."
+                "Brake Pads/Shoes - Front": "Current 10 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 24.9 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 8 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.2 mm. Good condition.",
+                "Air Conditioning": "Air conditioning operating correctly.",
+                "Suspension": "Suspension checked. No faults found."
             }
         },
         tyres: {
-            fl: { outer: 6, mid: 6, inner: 6, make: "YOKOHAMA", size: "215/45 R18 93W", notes: "Excellent condition.", status: "Green" },
-            fr: { outer: 6, mid: 6, inner: 6, make: "YOKOHAMA", size: "215/45 R18 93W", notes: "Excellent condition.", status: "Green" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "BRIDGESTONE", size: "215/45 R18 89W", notes: "Excellent condition.", status: "Green" },
-            rr: { outer: 6, mid: 6, inner: 6, make: "BRIDGESTONE", size: "215/45 R18 89W", notes: "Excellent condition.", status: "Green" }
+            fl: { outer: 6, mid: 6, inner: 6, make: "KUMHO", size: "215/55 R17 94W", notes: "Good condition.", status: "Green" },
+            fr: { outer: 6, mid: 6, inner: 6, make: "KUMHO", size: "215/55 R17 94W", notes: "Good condition.", status: "Green" },
+            rl: { outer: 5, mid: 5, inner: 5, make: "NEXEN", size: "215/55 R17", notes: "Non-repairable cut. Tyre replacement required.", status: "Red" },
+            rr: { outer: 5, mid: 5, inner: 5, make: "NEXEN", size: "215/55 R17", notes: "Non-repairable cut. Tyre replacement required.", status: "Red" }
         }
     };
 
