@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.19
+// @version      0.33.20
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.19";
-    const ACTIVE_WIP = "32515";
-    const ACTIVE_VEHICLE = "OY73 JXZ";
+    const VERSION = "0.33.20";
+    const ACTIVE_WIP = "32277";
+    const ACTIVE_VEHICLE = "LN16 TOJ";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -25,19 +25,17 @@
             defaultColour: "green",
             colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 8 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 19.6 mm. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 7 mm. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 9.5 mm. Good condition.",
-                "Suspension": "Suspension checked. No faults found.",
-                "Fluid Levels": "All fluid levels checked and correct."
+                "Brake Pads/Shoes - Front": "Current 7 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 27.0 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 8 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.0 mm. Good condition."
             }
         },
         tyres: {
-            fl: { outer: 7, mid: 7, inner: 7, make: "PIRELLI", size: "195/45 R16", notes: "New tyre. Excellent condition.", status: "Green" },
-            fr: { outer: 7, mid: 7, inner: 7, make: "PIRELLI", size: "195/45 R16", notes: "New tyre. Excellent condition.", status: "Green" },
-            rl: { outer: 5, mid: 5, inner: 5, make: "HANKOOK", size: "195/45 R16 84H", notes: "Excellent condition.", status: "Green" },
-            rr: { outer: 5, mid: 5, inner: 5, make: "HANKOOK", size: "195/45 R16 84H", notes: "Excellent condition.", status: "Green" }
+            fl: { outer: 2.9, mid: 2.9, inner: 2.9, make: "TOYO PROXES", size: "225/55 ZR17 101Y", notes: "Tread close to legal limit. Replacement recommended soon.", status: "Amber" },
+            fr: { outer: 2.9, mid: 2.9, inner: 2.9, make: "TOYO PROXES", size: "225/55 ZR17 101Y", notes: "Tread close to legal limit. Replacement recommended soon.", status: "Amber" },
+            rl: { outer: 2.9, mid: 2.9, inner: 2.9, make: "TOYO PROXES", size: "225/55 R17 97W", notes: "Tread close to legal limit. Replacement recommended soon.", status: "Amber" },
+            rr: { outer: 4, mid: 4, inner: 4, make: "TOYO PROXES", size: "225/55 R17 97W", notes: "Good condition.", status: "Green" }
         }
     };
 
