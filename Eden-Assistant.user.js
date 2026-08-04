@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.20
+// @version      0.33.21
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,7 +14,7 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.20";
+    const VERSION = "0.33.21";
     const ACTIVE_WIP = "32277";
     const ACTIVE_VEHICLE = "LN16 TOJ";
     const MAX_DESCRIPTION = 96;
