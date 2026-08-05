@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.22
+// @version      0.33.23
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.22";
-    const ACTIVE_WIP = "31996";
-    const ACTIVE_VEHICLE = "RA25 HUJ";
+    const VERSION = "0.33.23";
+    const ACTIVE_WIP = "32358";
+    const ACTIVE_VEHICLE = "RA25 VZV";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -25,17 +25,19 @@
             defaultColour: "green",
             colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 10 mm. 100% condition.",
-                "Brake Discs/Drums - Front": "Current 22.2 mm. 100% condition.",
-                "Brake Pads/Shoes - Rear": "Current 10 mm. 100% condition.",
-                "Brake Discs/Drums - Rear": "Current 10 mm. 100% condition."
+                "Brake Pads/Shoes - Front": "Current 12 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 25.0 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 9 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.0 mm. Good condition.",
+                "Suspension": "Suspension checked. No faults found.",
+                "Fluid Levels": "All fluid levels checked and correct."
             }
         },
         tyres: {
-            fl: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "205/55 R17 91V", notes: "Good condition.", status: "Green" },
-            fr: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "205/55 R17 91V", notes: "Good condition.", status: "Green" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "205/55 R17 91V", notes: "Good condition.", status: "Green" },
-            rr: { outer: 6, mid: 6, inner: 6, make: "CONTINENTAL", size: "205/55 R17 91V", notes: "Good condition.", status: "Green" }
+            fl: { outer: 4, mid: 4, inner: 4, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" },
+            fr: { outer: 4, mid: 4, inner: 4, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" }
         }
     };
 
