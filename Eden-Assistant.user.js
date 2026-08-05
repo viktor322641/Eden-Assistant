@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.23
+// @version      0.33.24
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.23";
-    const ACTIVE_WIP = "32358";
-    const ACTIVE_VEHICLE = "RA25 VZV";
+    const VERSION = "0.33.24";
+    const ACTIVE_WIP = "31494";
+    const ACTIVE_VEHICLE = "RY25 AVD";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -26,18 +26,16 @@
             colours: {},
             comments: {
                 "Brake Pads/Shoes - Front": "Current 12 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 25.0 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 22.0 mm. Good condition.",
                 "Brake Pads/Shoes - Rear": "Current 9 mm. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 10.0 mm. Good condition.",
-                "Suspension": "Suspension checked. No faults found.",
-                "Fluid Levels": "All fluid levels checked and correct."
+                "Brake Discs/Drums - Rear": "Current 10.0 mm. Good condition."
             }
         },
         tyres: {
-            fl: { outer: 4, mid: 4, inner: 4, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" },
-            fr: { outer: 4, mid: 4, inner: 4, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" },
-            rr: { outer: 6, mid: 6, inner: 6, make: "NEXEN", size: "215/60 R17 96H", notes: "Good condition.", status: "Green" }
+            fl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "195/55 R16 87H", notes: "Good condition.", status: "Green" },
+            fr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "195/55 R16 87H", notes: "Good condition.", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "195/55 R16 87H", notes: "Good condition.", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "195/55 R16 87H", notes: "Good condition.", status: "Green" }
         }
     };
 
