@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.25
+// @version      0.33.26
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,36 +14,28 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.25";
-    const ACTIVE_WIP = "32677";
-    const ACTIVE_VEHICLE = "OY67 UOM";
+    const VERSION = "0.33.26";
+    const ACTIVE_WIP = "32455";
+    const ACTIVE_VEHICLE = "RX23 NCA";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
     const PROFILE = {
         inspection: {
             defaultColour: "green",
-            colours: {
-                "Engine Oil": "red",
-                "Engine Oil Level": "red",
-                "Brake Discs/Drums - Front": "amber",
-                "Brake Pads/Shoes - Rear": "amber",
-                "Brake Discs/Drums - Rear": "red"
-            },
+            colours: {},
             comments: {
-                "Engine Oil": "Engine oil critically low. Top up immediately and investigate oil loss.",
-                "Engine Oil Level": "Engine oil critically low. Top up immediately and investigate oil loss.",
-                "Brake Pads/Shoes - Front": "Current 8 mm. Approx. 60% life remaining. OSF brake binding noted.",
-                "Brake Discs/Drums - Front": "23.2/23.1 mm. Approx. 5-10% life remaining. Replace soon.",
-                "Brake Pads/Shoes - Rear": "Current 4 mm. Approx. 25% life remaining. NSR brake binding noted.",
-                "Brake Discs/Drums - Rear": "Current 9.4 mm; below 10.0 mm minimum. Replacement required."
+                "Brake Pads/Shoes - Front": "Current 7 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 24.7 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 6 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 8.9 mm. Good condition."
             }
         },
         tyres: {
-            fl: { outer: 6, mid: 6, inner: 6, make: "DAVANTI", size: "245/45 ZR19 102Y", notes: "Good condition.", status: "Green" },
-            fr: { outer: 6, mid: 6, inner: 6, make: "DAVANTI", size: "245/45 ZR19 102Y", notes: "Good condition.", status: "Green" },
-            rl: { outer: 5, mid: 5, inner: 5, make: "AVON", size: "245/45 R19 102Y XL", notes: "Large non-repairable cut. Immediate replacement required.", status: "Red" },
-            rr: { outer: 5, mid: 5, inner: 5, make: "AVON", size: "245/45 R19 102Y XL", notes: "Good condition.", status: "Green" }
+            fl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" },
+            fr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" },
+            rl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" },
+            rr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" }
         }
     };
 
