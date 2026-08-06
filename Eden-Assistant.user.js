@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Eden Assistant
 // @namespace    eden-assistant
-// @version      0.33.26
+// @version      0.33.27
 // @description  Opens the prepared WIP and fills Inspection and Tyres without saving or completing the VHC
 // @match        https://login.eden1vision.com/*
 // @match        https://eden.dealfile.co.uk/*
@@ -14,9 +14,9 @@
 (function () {
     "use strict";
 
-    const VERSION = "0.33.26";
-    const ACTIVE_WIP = "32455";
-    const ACTIVE_VEHICLE = "RX23 NCA";
+    const VERSION = "0.33.27";
+    const ACTIVE_WIP = "33341";
+    const ACTIVE_VEHICLE = "WD73 DVN";
     const MAX_DESCRIPTION = 96;
     const MARKER = "EDEN_ASSISTANT_PENDING:";
 
@@ -25,17 +25,17 @@
             defaultColour: "green",
             colours: {},
             comments: {
-                "Brake Pads/Shoes - Front": "Current 7 mm. Good condition.",
-                "Brake Discs/Drums - Front": "Current 24.7 mm. Good condition.",
-                "Brake Pads/Shoes - Rear": "Current 6 mm. Good condition.",
-                "Brake Discs/Drums - Rear": "Current 8.9 mm. Good condition."
+                "Brake Pads/Shoes - Front": "Current 11 mm. Good condition.",
+                "Brake Discs/Drums - Front": "Current 25.3 mm. Good condition.",
+                "Brake Pads/Shoes - Rear": "Current 9 mm. Good condition.",
+                "Brake Discs/Drums - Rear": "Current 10.0 mm. Good condition."
             }
         },
         tyres: {
-            fl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" },
-            fr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" },
-            rl: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" },
-            rr: { outer: 6, mid: 6, inner: 6, make: "MICHELIN", size: "215/55 R18 99V", notes: "Good condition.", status: "Green" }
+            fl: { outer: 7, mid: 7, inner: 7, make: "SUMITOMO", size: "215/55 R18 99W", notes: "Good condition.", status: "Green" },
+            fr: { outer: 7, mid: 7, inner: 7, make: "SUMITOMO", size: "215/55 R18 99W", notes: "Good condition.", status: "Green" },
+            rl: { outer: 5, mid: 5, inner: 5, make: "SUMITOMO", size: "215/55 R18 99W", notes: "Good condition.", status: "Green" },
+            rr: { outer: 7, mid: 7, inner: 7, make: "SUMITOMO", size: "215/55 R18 99W", notes: "Good condition.", status: "Green" }
         }
     };
 
